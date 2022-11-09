@@ -1,4 +1,4 @@
-package za.co.tms.tms;
+package za.co.tms;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

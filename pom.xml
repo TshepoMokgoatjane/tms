@@ -8,11 +8,11 @@
 		<version>2.7.5</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>za.co.tms</groupId>
+	<groupId>za.co</groupId>
 	<artifactId>tms</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>tms</name>
-	<description>tms</description>
+	<name>Tenant-Management-System</name>
+	<description>Tenant Management System</description>
 	<properties>
 		<java.version>17</java.version>
 	</properties>
@@ -70,6 +70,7 @@
 						</exclude>
 					</excludes>
 				</configuration>
+				<version>${project.parent.version}</version>
 			</plugin>
 		</plugins>
 	</build>

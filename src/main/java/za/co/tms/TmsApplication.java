@@ -1,4 +1,4 @@
-package za.co.tms.tms;
+package za.co.tms;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
