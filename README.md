@@ -5,13 +5,13 @@ The purpose of this project is to allow the Landlord to efficiently manage their
 Therefore, we are going digital in our approach to make the Landlord's life and that of his tenants a whole lot easier.
 
 ## Technology Stack Used:
-1item Spring Framework 5 
-Spring Boot 2
-Spring MVC
-Spring Data JPA
-PostgreSQL
-Spring Data MongoDB
-Hibernate
+- Spring Framework 5 
+- Spring Boot 2
+- Spring MVC
+- Spring Data JPA
+- PostgreSQL
+- Spring Data MongoDB
+- Hibernate
 
 ## Features
 
