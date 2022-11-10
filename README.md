@@ -12,12 +12,16 @@ Therefore, we are going digital in our approach to make the Landlord's life and 
 - PostgreSQL
 - Spring Data MongoDB
 - Hibernate
+- Angular
+- Thymeleaf 
 
 ## Features
+- We perform basic CRUD operations
 
 ## Code Examples
 
 ## Installations
+- No special software is required before using this App as it fully web-based.
 
 ## API Reference
 
@@ -31,3 +35,4 @@ Therefore, we are going digital in our approach to make the Landlord's life and 
 John Thompson
 
 ## License
+- No licenses required here.
