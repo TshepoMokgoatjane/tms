@@ -1,1 +1,1 @@
-## tms Tenant Management System
+## Tenant Management System - TMS
