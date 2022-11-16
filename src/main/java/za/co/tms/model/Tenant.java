@@ -11,13 +11,15 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @Entity
-public class Tenant implements Serializable {
+public class Tenant extends AuditModel implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(updatable = false, nullable = false)
     private Long id;
 
     private String name;
+    private String surname;
+    private String title;
     private String email;
     private String roomNumber;
     private int numberOfTenantsInUnit;
