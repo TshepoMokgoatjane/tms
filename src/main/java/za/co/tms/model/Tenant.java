@@ -33,6 +33,8 @@ public class Tenant extends AuditModel implements Serializable {
     private String surname;
     private String title;
     private String email;
+    private String cellPhoneNumer;
+    private String alternativeCellPhoneNumber;
     private String roomNumber;
     private int numberOfTenantsInUnit;
     private LocalDate leaseStartDate;
