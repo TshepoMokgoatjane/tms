@@ -43,5 +43,6 @@ public class Tenant extends AuditModel implements Serializable {
     private boolean paidDeposit;
     private BigDecimal rental;
     private LocalDate paymentDate;
+    private TenantBehaviour tenantBehaviour;
 
 }
