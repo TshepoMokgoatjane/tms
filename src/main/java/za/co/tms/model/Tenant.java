@@ -1,18 +1,30 @@
 package za.co.tms.model;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper=false)
 @Entity
 public class Tenant extends AuditModel implements Serializable {
-    @Id
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 7011620956908743611L;
+
+	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(updatable = false, nullable = false)
     private Long id;

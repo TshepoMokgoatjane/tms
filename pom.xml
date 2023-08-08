@@ -5,14 +5,14 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.7.5</version>
+		<version>3.1.2</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>za.co</groupId>
 	<artifactId>tms</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Tenant-Management-System</name>
-	<description>Tenant Management System</description>
+	<description>Tenant Management System - Java Spring Boot Full Stack Cloud Web Application</description>
 	<properties>
 		<java.version>17</java.version>
 	</properties>
@@ -24,10 +24,6 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-thymeleaf</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -70,8 +66,7 @@
 						</exclude>
 					</excludes>
 				</configuration>
-				<version>${project.parent.version}</version>
-			</plugin>
+				</plugin>
 		</plugins>
 	</build>
 

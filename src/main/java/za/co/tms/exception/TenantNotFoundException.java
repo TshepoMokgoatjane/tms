@@ -1,7 +1,12 @@
 package za.co.tms.exception;
 
 public class TenantNotFoundException extends RuntimeException {
-    public TenantNotFoundException(String message) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public TenantNotFoundException(String message) {
         super(message);
     }
 }
