@@ -44,10 +44,10 @@ Therefore, we are going digital in our approach to make the Landlord's life and 
 ### Contributors
 
 ### Credits
-Ranga Karanam
-John Thompson
-Robert C. Martin
-The Gang of Four
+- Ranga Karanam
+- John Thompson
+- Robert C. Martin
+- The Gang of Four
 
 ### License
 - No licenses required here.
