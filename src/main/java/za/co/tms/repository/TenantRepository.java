@@ -9,5 +9,6 @@ import java.util.Optional;
 public interface TenantRepository extends JpaRepository<Tenant, Integer> {
 
 	List<Tenant> findTenantByName(String name);
+	List<Tenant> findTenantById(int id);
 }
 

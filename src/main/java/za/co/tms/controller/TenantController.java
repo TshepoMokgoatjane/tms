@@ -29,6 +29,11 @@ public class TenantController {
 		return tenantService.findTenantByName(name);
 	}
 	
+	@GetMapping(path="/find/by/{id}")
+	public Tenant retrieveTenantById(@PathVariable int id) {
+		return tenantService.findTenantById(id);
+	}
+	
 	@DeleteMapping(path="/delete/{id}")
 	public ResponseEntity<Void> deleteTenantById(@PathVariable int id) {
 		tenantService.deleteTenantById(id);

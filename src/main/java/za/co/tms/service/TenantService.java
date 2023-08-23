@@ -48,20 +48,26 @@ public class TenantService {
 
 	public Tenant findTenantByName(String name) {
 		Predicate<? super Tenant> predicate = tenant -> tenant.getName().equalsIgnoreCase(name);
-		Tenant todo = tenants.stream().filter(predicate).findFirst().get();
-		return todo;
+		Tenant tenant = tenants.stream().filter(predicate).findFirst().get();
+		return tenant;
+	}
+	
+	public Tenant findTenantById(int id) {
+		Predicate<? super Tenant> predicate = tenant -> tenant.getId() == id;
+		Tenant tenant = tenants.stream().filter(predicate).findFirst().get();
+		return tenant;
 	}
 	
 	public Tenant addTenant(Tenant tenant) {
-		Tenant todo = new Tenant(++tenantsCount, tenant.getName(),tenant.getSurname(),
+		Tenant tenantRef = new Tenant(++tenantsCount, tenant.getName(),tenant.getSurname(),
 				tenant.getTitle(), tenant.getEmail(), tenant.getCellPhoneNumber(),
 				tenant.getAlternativeCellPhoneNumber(), tenant.getRoomNumber(),
 				tenant.getNumberOfTenantsInUnit(),
 				tenant.getLeaseStartDate(), tenant.getLeaseEndDate(),
 				tenant.getPrepaidElectricityMeter(), tenant.isDepositPaid(),
 				tenant.getRental(), tenant.getPaymentDate(), tenant.getTenantBehaviour());
-		tenants.add(todo);
-		return todo;
+		tenants.add(tenantRef);
+		return tenantRef;
 	}
 	
 	public void deleteTenantById(int id) {
