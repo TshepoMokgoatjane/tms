@@ -26,19 +26,34 @@ public class TenantService {
 	
 	static {		
 		tenants.add(new Tenant(++tenantsCount, "Eugene","Ranga", "Mr.", 
-				"eugene@gmail.com", "011548922365", "012549556996", "A1",
+				"eugene@gmail.com", "0115489223", "0125495569", "A1",
 				5, LocalDate.now().plusYears(10), LocalDate.now().plusYears(10),
-				"9856321478523689644", true, 5500.00, LocalDate.now().plusYears(10), 
+				"98563214785", true, 5500.00, LocalDate.now().plusYears(10), 
 				TenantBehaviour.GOOD));
 		tenants.add(new Tenant(++tenantsCount, "James","Crowthorn", "Mr.", 
-				"james.c@google.com", "011548922365", "012549556996", "B1",
+				"james.c@google.com", "0115489223", "0125495569", "B1",
 				5, LocalDate.now().plusYears(10), LocalDate.now().plusYears(10),
-				"1256836871782225566", false, 5000.00, LocalDate.now().plusYears(10), 
+				"12568368717", false, 5000.00, LocalDate.now().plusYears(10), 
 				TenantBehaviour.BAD));
 		tenants.add(new Tenant(++tenantsCount, "Timothy","Winfrey", "Mr.", 
-				"tim@ibm.com", "01254789635", "012549556996", "C1",
+				"tim@ibm.com", "0125478963", "0125495569", "C1",
 				5, LocalDate.now().plusYears(10), LocalDate.now().plusYears(10),
-				"5648923157525055665", true, 5500.00, LocalDate.now().plusYears(10), 
+				"56489231575", true, 5500.00, LocalDate.now().plusYears(10), 
+				TenantBehaviour.GOOD));
+		tenants.add(new Tenant(++tenantsCount, "Greg","Johnson", "Mr.", 
+				"greg.johnson@yahoo.com", "0125478963", "0125495569", "B2",
+				5, LocalDate.now().plusYears(10), LocalDate.now().plusYears(10),
+				"03254199244", true, 6500.00, LocalDate.now().plusYears(10), 
+				TenantBehaviour.GOOD));
+		tenants.add(new Tenant(++tenantsCount, "Steve","Kelly", "Mr.", 
+				"stevek@atlassian.com", "0125478963", "0125495569", "A2",
+				5, LocalDate.now().plusYears(10), LocalDate.now().plusYears(10),
+				"58965218962", true, 7000.00, LocalDate.now().plusYears(10), 
+				TenantBehaviour.GOOD));
+		tenants.add(new Tenant(++tenantsCount, "Becky","Goldberg", "Mrs.", 
+				"becky.goldberg@discovery.com", "0125478963", "0125495569", "A10",
+				5, LocalDate.now().plusYears(10), LocalDate.now().plusYears(10),
+				"36985214781", true, 7500.00, LocalDate.now().plusYears(10), 
 				TenantBehaviour.GOOD));
 	}
 		
@@ -64,7 +79,7 @@ public class TenantService {
 				tenant.getAlternativeCellPhoneNumber(), tenant.getRoomNumber(),
 				tenant.getNumberOfTenantsInUnit(),
 				tenant.getLeaseStartDate(), tenant.getLeaseEndDate(),
-				tenant.getPrepaidElectricityMeter(), tenant.isDepositPaid(),
+				tenant.getPrepaidElectricityMeterNumber(), tenant.isDepositPaid(),
 				tenant.getRental(), tenant.getPaymentDate(), tenant.getTenantBehaviour());
 		tenants.add(tenantRef);
 		return tenantRef;

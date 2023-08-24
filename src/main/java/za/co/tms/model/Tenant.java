@@ -12,7 +12,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
@@ -42,7 +41,7 @@ public class Tenant extends AuditModel implements Serializable {
     private int numberOfTenantsInUnit;
     private LocalDate leaseStartDate;
     private LocalDate leaseEndDate;
-    private String prepaidElectricityMeter;
+    private String prepaidElectricityMeterNumber;
     private boolean depositPaid;
     private double rental;
     private LocalDate paymentDate;
