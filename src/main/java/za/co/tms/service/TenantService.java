@@ -13,6 +13,7 @@ import java.util.function.Predicate;
 
 @Service
 public class TenantService {
+	
     private final TenantRepository tenantRepository;
     
     private static List<Tenant> tenants = new ArrayList<>();
@@ -24,7 +25,8 @@ public class TenantService {
         this.tenantRepository = tenantRepository;
     }
 	
-	static {		
+	static {	
+		
 		tenants.add(new Tenant(++tenantsCount, "Eugene","Ranga", "Mr.", 
 				"eugene@gmail.com", "0115489223", "0125495569", "A1",
 				5, LocalDate.now().plusYears(10), LocalDate.now().plusYears(10),
