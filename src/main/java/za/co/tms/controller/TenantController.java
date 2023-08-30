@@ -53,4 +53,9 @@ public class TenantController {
 		
 		return createdTenant;
 	}
+	
+	@GetMapping("/basicauth")
+	public String basicAuthChec() {
+		return "Success";
+	}
 }

@@ -1,10 +1,8 @@
 package za.co.tms.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import za.co.tms.model.Tenant;
 import za.co.tms.model.TenantBehaviour;
-import za.co.tms.repository.TenantRepository;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -14,16 +12,10 @@ import java.util.function.Predicate;
 @Service
 public class TenantService {
 	
-    private final TenantRepository tenantRepository;
     
     private static List<Tenant> tenants = new ArrayList<>();
     
 	private static Integer tenantsCount = 0;
-
-    @Autowired
-    public TenantService(TenantRepository tenantRepository) {
-        this.tenantRepository = tenantRepository;
-    }
 	
 	static {	
 		
