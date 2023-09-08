@@ -1,4 +1,4 @@
-package za.co.tms.rest.webservices.restfulwebservices.jwt;
+package za.co.tms.jwt;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -42,15 +42,14 @@ import com.nimbusds.jose.proc.SecurityContext;
 @EnableMethodSecurity
 public class JwtSecurityConfig {
 
-    @SuppressWarnings("removal")
-	@Bean
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity, HandlerMappingIntrospector introspector) throws Exception {
         
         // h2-console is a servlet 
         // https://github.com/spring-projects/spring-security/issues/12310
         return httpSecurity
                 .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/authenticate").permitAll()
+                	.requestMatchers("/authenticate").permitAll()
                     .requestMatchers(PathRequest.toH2Console()).permitAll() // h2-console is a servlet and NOT recommended for a production
                     .requestMatchers(HttpMethod.OPTIONS,"/**")
                     .permitAll()

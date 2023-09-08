@@ -1,4 +1,4 @@
-package za.co.tms.rest.webservices.restfulwebservices.jwt;
+package za.co.tms.jwt;
 
 public record JwtTokenRequest(String username, String password) {}
 

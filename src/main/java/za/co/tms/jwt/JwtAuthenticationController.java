@@ -1,4 +1,4 @@
-package za.co.tms.rest.webservices.restfulwebservices.jwt;
+package za.co.tms.jwt;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;

@@ -1,4 +1,4 @@
-package za.co.tms.rest.webservices.restfulwebservices.jwt;
+package za.co.tms.jwt;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
