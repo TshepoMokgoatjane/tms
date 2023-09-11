@@ -48,7 +48,7 @@ public class TenantController {
 	}
 	
 	@PostMapping("/create")
-	public Tenant createTodo(@RequestBody Tenant tenant) {
+	public Tenant createTenant(@RequestBody Tenant tenant) {
 		Tenant createdTenant = tenantService.addTenant(tenant);
 		
 		return createdTenant;
