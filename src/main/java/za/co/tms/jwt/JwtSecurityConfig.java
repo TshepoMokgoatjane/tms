@@ -6,6 +6,7 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.UUID;
 
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -125,7 +126,5 @@ public class JwtSecurityConfig {
             throw new IllegalStateException(
                     "Unable to generate an RSA Key Pair", e);
         }
-    }
-    
+    }   
 }
-

@@ -30,7 +30,7 @@
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
-		</dependency>
+		</dependency>		
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
