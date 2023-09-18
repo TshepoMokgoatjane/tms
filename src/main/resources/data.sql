@@ -15,3 +15,21 @@ values (400025, CURRENT_DATE(), CURRENT_DATE(), 0715578103, 0830120367, false, '
 
 insert into tenant(id, created_at, updated_at, alternative_cell_phone_number, cell_phone_number, deposit_paid, email, lease_end_date, lease_start_date, name, number_of_tenants_in_unit, payment_date, prepaid_electricity_meter_number, rental, room_number, surname, tenant_behaviour, title)
 values (400026, CURRENT_DATE(), CURRENT_DATE(), 0720256378, 0815231999, true, 'nelly.fertado@sonymusic.com', CURRENT_DATE(), CURRENT_DATE(), 'Nelly', 4, CURRENT_DATE(), '57963296377' , 5000, 'B1', 'Fertado',0, 'Mrs.');
+
+
+create table users(id int not null auto_ncrement, username varchar(255) not null, password varchar(255) not null, enabled not null, primary key (id));
+use users;
+insert into users(username, password, enabled)
+values ('Mtshepiro', 'dummy', true);
+
+insert into users(username, password, enabled)
+values ('admin', 'dummy', true);
+
+
+create table authorities(id int not null auto_ncrement, username varchar(255) not null, authority varchar(255) not null, primary key (id));
+use authorities;
+insert into authorities(username, authority)
+values ('Mtshepiro', 'ROLE_USER');
+
+insert into authorities(username, authority)
+values ('admin', 'ROLE_ADMIN');

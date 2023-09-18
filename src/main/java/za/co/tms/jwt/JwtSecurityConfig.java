@@ -126,5 +126,5 @@ public class JwtSecurityConfig {
             throw new IllegalStateException(
                     "Unable to generate an RSA Key Pair", e);
         }
-    }   
+    }
 }
