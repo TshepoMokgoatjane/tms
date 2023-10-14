@@ -21,7 +21,8 @@ public class TmsApplication {
 			public void addCorsMappings(CorsRegistry registry) {
 				registry.addMapping("/**")
 				.allowedMethods("*")
-				.allowedOrigins("http://localhost:3000");
+				.allowedOrigins("http://tltproduction.com");
+				//.allowedOrigins("http://localhost:3000");
 			}
 		};
 	}
