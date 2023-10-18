@@ -26,7 +26,7 @@ public class ContactUs {
 	private String lastName;
 	private String email;
 	private String mobilePhoneNumber;
-	private ReferenceAd referenceAd;
+	private ReferenceAd whereDidYouHearAboutUs;
 	private String message;
 	private String resolution;
 	private String acceptTermsAndConditions;
