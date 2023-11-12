@@ -13,6 +13,8 @@ public class TenantService {
 	
 	private TenantRepository tenantRepository;
 	
+	private static final int TENANT_STATUS_INACTIVE = 1;
+	
 	@Autowired
 	public TenantService(TenantRepository tenantRepository) {
 		this.tenantRepository = tenantRepository;
@@ -41,7 +43,10 @@ public class TenantService {
 	}
 	
 	public void deleteTenantById(int id) {
-		tenantRepository.deleteById(id);
+		Tenant tenant = findTenantById(id);
+		tenant.setTenantStatus(TENANT_STATUS_INACTIVE);
+		
+		tenantRepository.save(tenant);
 	}
 
 	public void updateTenant(Tenant tenant) {

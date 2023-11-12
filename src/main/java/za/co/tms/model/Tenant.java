@@ -45,5 +45,6 @@ public class Tenant extends AuditModel implements Serializable {
     private boolean depositPaid;
     private double rental;
     private LocalDate paymentDate;
-    private TenantBehaviour tenantBehaviour;   
+    private TenantBehaviour tenantBehaviour;
+    private int tenantStatus;
 }
