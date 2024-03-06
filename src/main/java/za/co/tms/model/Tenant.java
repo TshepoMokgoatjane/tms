@@ -44,7 +44,7 @@ public class Tenant extends AuditModel implements Serializable {
     private String prepaidElectricityMeterNumber;
     private boolean depositPaid;
     private double rental;
-    private LocalDate paymentDate;
+    private String paymentDate;
     private TenantBehaviour tenantBehaviour;
     private int tenantStatus;
 }
