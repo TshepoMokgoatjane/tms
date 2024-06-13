@@ -6,6 +6,7 @@ public enum Category {
 	PLUMBING,
 	CARPENTRY,
 	PAINTING,
+	WIFI,
 	BASIC_MAINTENANCE
 	
 }
