@@ -4,7 +4,9 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface HelpdeskTicketManagement extends JpaRepository<HelpdeskTicketManagement, Integer> {
+import za.co.tms.model.HelpdeskTicketManagement;
+
+public interface HelpdeskTicketManagementRepository extends JpaRepository<HelpdeskTicketManagement, Integer> {
 
 	List<HelpdeskTicketManagement> findHelpdeskTicketManagementByTicketNumber(int ticketNumber);
 	List<HelpdeskTicketManagement> findHelpdeskTicketManagementById(int id);
