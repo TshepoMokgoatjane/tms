@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
-public class HelpdeskTicket implements Serializable {
+public class Ticket implements Serializable {
 	/**
 	 * Generated a serial version UID
 	 */

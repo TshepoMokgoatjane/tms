@@ -13,37 +13,37 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import za.co.tms.model.HelpdeskTicket;
-import za.co.tms.service.HelpdeskTicketService;
+import za.co.tms.model.Ticket;
+import za.co.tms.service.TicketService;
 
 @RestController
-@RequestMapping("/helpDeskTicketManagement")
-public class HelpdeskTicketController {
+@RequestMapping("/tickets")
+public class TicketController {
 	
-	private HelpdeskTicketService helpDeskTicketService;
+	private TicketService helpDeskTicketService;
 	
 	@Autowired
-	public HelpdeskTicketController(HelpdeskTicketService helpDeskTicketService) {
+	public TicketController(TicketService helpDeskTicketService) {
 		this.helpDeskTicketService = helpDeskTicketService;
 	}
 
 	@GetMapping(path="/find/all")
-	public List<HelpdeskTicket> retrieveHelpdeskTickets() {
+	public List<Ticket> retrieveHelpdeskTickets() {
 		return helpDeskTicketService.findAllHelpdeskTickets();
 	}
 	
 	@GetMapping(path="/find/by/{id}")
-	public HelpdeskTicket retrieveHelpdeskTicketById(@PathVariable int id) {
+	public Ticket retrieveHelpdeskTicketById(@PathVariable int id) {
 		return helpDeskTicketService.findHelpdeskTicketById(id);
 	}
 	
 	@GetMapping(path="/find/by/{ticketNumber}")
-	public HelpdeskTicket retrieveHelpdeskTicketManagementByTicketNumber(@PathVariable int ticketNumber) {
+	public Ticket retrieveHelpdeskTicketManagementByTicketNumber(@PathVariable int ticketNumber) {
 		return helpDeskTicketService.findHelpdeskTicketByTicketNumber(ticketNumber);
 	}
 	
 	@GetMapping(path="/find/by/{raisedBy}")
-	public HelpdeskTicket retrieveHelpdeskTicketByRaisedBy(@PathVariable String raisedBy) {
+	public Ticket retrieveHelpdeskTicketByRaisedBy(@PathVariable String raisedBy) {
 		return helpDeskTicketService.findHelpdeskTicketByRaisedBy(raisedBy);
 	}
 	
@@ -54,14 +54,14 @@ public class HelpdeskTicketController {
 	}
 	
 	@PutMapping(path="/update/{id}")
-	public HelpdeskTicket updateHelpdeskTicket(@PathVariable int id, @RequestBody HelpdeskTicket helpDeskTicket) {
+	public Ticket updateHelpdeskTicket(@PathVariable int id, @RequestBody Ticket helpDeskTicket) {
 		helpDeskTicketService.updateHelpdeskTicket(helpDeskTicket);
 		return helpDeskTicket;
 	}
 	
 	@PostMapping("/create")
-	public HelpdeskTicket createHelpdeskTicketManagement(@RequestBody HelpdeskTicket helpDeskTicket) {
-		HelpdeskTicket createdHelpdeskTicket = helpDeskTicketService.addHelpdeskTicket(helpDeskTicket);
+	public Ticket createHelpdeskTicketManagement(@RequestBody Ticket helpDeskTicket) {
+		Ticket createdHelpdeskTicket = helpDeskTicketService.addHelpdeskTicket(helpDeskTicket);
 		return createdHelpdeskTicket;
 	}
 }
