@@ -20,48 +20,48 @@ import za.co.tms.service.TicketService;
 @RequestMapping("/tickets")
 public class TicketController {
 	
-	private TicketService helpDeskTicketService;
+	private TicketService ticketService;
 	
 	@Autowired
-	public TicketController(TicketService helpDeskTicketService) {
-		this.helpDeskTicketService = helpDeskTicketService;
+	public TicketController(TicketService ticketService) {
+		this.ticketService = ticketService;
 	}
 
 	@GetMapping(path="/find/all")
 	public List<Ticket> retrieveHelpdeskTickets() {
-		return helpDeskTicketService.findAllHelpdeskTickets();
+		return ticketService.findAllHelpdeskTickets();
 	}
 	
 	@GetMapping(path="/find/by/{id}")
 	public Ticket retrieveHelpdeskTicketById(@PathVariable int id) {
-		return helpDeskTicketService.findHelpdeskTicketById(id);
+		return ticketService.findHelpdeskTicketById(id);
 	}
 	
 	@GetMapping(path="/find/by/{ticketNumber}")
 	public Ticket retrieveHelpdeskTicketManagementByTicketNumber(@PathVariable int ticketNumber) {
-		return helpDeskTicketService.findHelpdeskTicketByTicketNumber(ticketNumber);
+		return ticketService.findHelpdeskTicketByTicketNumber(ticketNumber);
 	}
 	
 	@GetMapping(path="/find/by/{raisedBy}")
 	public Ticket retrieveHelpdeskTicketByRaisedBy(@PathVariable String raisedBy) {
-		return helpDeskTicketService.findHelpdeskTicketByRaisedBy(raisedBy);
+		return ticketService.findHelpdeskTicketByRaisedBy(raisedBy);
 	}
 	
 	@DeleteMapping(path="/delete/{id}")
 	public ResponseEntity<Void> deleteHelpdeskTicketManagementById(@PathVariable int id) {
-		helpDeskTicketService.deleteHelpdeskTicketById(id);
+		ticketService.deleteHelpdeskTicketById(id);
 		return ResponseEntity.noContent().build();
 	}
 	
 	@PutMapping(path="/update/{id}")
 	public Ticket updateHelpdeskTicket(@PathVariable int id, @RequestBody Ticket helpDeskTicket) {
-		helpDeskTicketService.updateHelpdeskTicket(helpDeskTicket);
+		ticketService.updateHelpdeskTicket(helpDeskTicket);
 		return helpDeskTicket;
 	}
 	
 	@PostMapping("/create")
 	public Ticket createHelpdeskTicketManagement(@RequestBody Ticket helpDeskTicket) {
-		Ticket createdHelpdeskTicket = helpDeskTicketService.addHelpdeskTicket(helpDeskTicket);
+		Ticket createdHelpdeskTicket = ticketService.addHelpdeskTicket(helpDeskTicket);
 		return createdHelpdeskTicket;
 	}
 }

@@ -8,7 +8,7 @@ import za.co.tms.model.Ticket;
 
 public interface TicketRepository extends JpaRepository<Ticket, Integer> {
 
-	List<Ticket> findHelpdeskTicketByTicketNumber(int ticketNumber);
-	List<Ticket> findHelpdeskTicketById(int id);
-	List<Ticket> findHelpdeskTicketByRaisedBy(String raisedBy);	
+	List<Ticket> findTicketByTicketNumber(int ticketNumber);
+	List<Ticket> findTicketById(int id);
+	List<Ticket> findTicketByRaisedBy(String raisedBy);	
 }

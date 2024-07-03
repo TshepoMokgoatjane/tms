@@ -13,32 +13,32 @@ import za.co.tms.repository.TicketRepository;
 @Service
 public class TicketService {
 
-	private TicketRepository helpdeskTicketRepository;
+	private TicketRepository ticketRepository;
 	
 	@Autowired
-	public TicketService(TicketRepository helpdeskTicketRepository) {
-		this.helpdeskTicketRepository = helpdeskTicketRepository;
+	public TicketService(TicketRepository ticketRepository) {
+		this.ticketRepository = ticketRepository;
 	}
 	
 	public List<Ticket> findAllHelpdeskTickets() {
-		return helpdeskTicketRepository.findAll();
+		return ticketRepository.findAll();
 	}
 	
 	public Ticket findHelpdeskTicketById(int id) {
 		Predicate<? super Ticket> predicate = helpdeskTicket -> helpdeskTicket.getId() == id;
-		Ticket HelpdeskTicket = helpdeskTicketRepository.findHelpdeskTicketById(id).stream().filter(predicate).findFirst().get();
+		Ticket HelpdeskTicket = ticketRepository.findTicketById(id).stream().filter(predicate).findFirst().get();
 		return HelpdeskTicket;
 	}
 	
 	public Ticket findHelpdeskTicketByTicketNumber(int ticketNumber) {
 		Predicate<? super Ticket> predicate = helpdeskTicket -> helpdeskTicket.getTicketNumber() == ticketNumber;
-		Ticket HelpdeskTicket = helpdeskTicketRepository.findHelpdeskTicketByTicketNumber(ticketNumber).stream().filter(predicate).findFirst().get();
+		Ticket HelpdeskTicket = ticketRepository.findTicketByTicketNumber(ticketNumber).stream().filter(predicate).findFirst().get();
 		return HelpdeskTicket;
 	}
 	
 	public Ticket findHelpdeskTicketByRaisedBy(String raisedBy) {
 		Predicate<? super Ticket> predicate = helpdeskTicket -> helpdeskTicket.getRaisedBy().equalsIgnoreCase(raisedBy);
-		Ticket HelpdeskTicket = helpdeskTicketRepository.findHelpdeskTicketByRaisedBy(raisedBy).stream().filter(predicate).findFirst().get();
+		Ticket HelpdeskTicket = ticketRepository.findTicketByRaisedBy(raisedBy).stream().filter(predicate).findFirst().get();
 		return HelpdeskTicket;
 	}
 	
@@ -46,17 +46,17 @@ public class TicketService {
 		
 		helpdeskTicket.setId(null);
 		
-		return helpdeskTicketRepository.save(helpdeskTicket);
+		return ticketRepository.save(helpdeskTicket);
 	}
 	
 	public void deleteHelpdeskTicketById(int id) {
 		Ticket helpdeskTicket = findHelpdeskTicketById(id);
 		helpdeskTicket.setStatus(Status.CLOSED);
-		helpdeskTicketRepository.save(helpdeskTicket);
+		ticketRepository.save(helpdeskTicket);
 	}
 	
 	public void updateHelpdeskTicket(Ticket helpdeskTicket) {
 		deleteHelpdeskTicketById(helpdeskTicket.getId());
-		helpdeskTicketRepository.save(helpdeskTicket);
+		ticketRepository.save(helpdeskTicket);
 	}
 }
