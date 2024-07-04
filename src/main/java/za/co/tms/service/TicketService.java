@@ -30,18 +30,6 @@ public class TicketService {
 		return HelpdeskTicket;
 	}
 	
-	public Ticket findHelpdeskTicketByTicketNumber(int ticketNumber) {
-		Predicate<? super Ticket> predicate = helpdeskTicket -> helpdeskTicket.getTicketNumber() == ticketNumber;
-		Ticket HelpdeskTicket = ticketRepository.findTicketByTicketNumber(ticketNumber).stream().filter(predicate).findFirst().get();
-		return HelpdeskTicket;
-	}
-	
-	public Ticket findHelpdeskTicketByRaisedBy(String raisedBy) {
-		Predicate<? super Ticket> predicate = helpdeskTicket -> helpdeskTicket.getRaisedBy().equalsIgnoreCase(raisedBy);
-		Ticket HelpdeskTicket = ticketRepository.findTicketByRaisedBy(raisedBy).stream().filter(predicate).findFirst().get();
-		return HelpdeskTicket;
-	}
-	
 	public Ticket addHelpdeskTicket(Ticket helpdeskTicket) {
 		
 		helpdeskTicket.setId(null);

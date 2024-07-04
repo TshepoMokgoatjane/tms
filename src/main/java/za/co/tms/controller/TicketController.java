@@ -37,16 +37,6 @@ public class TicketController {
 		return ticketService.findHelpdeskTicketById(id);
 	}
 	
-	@GetMapping(path="/find/by/{ticketNumber}")
-	public Ticket retrieveHelpdeskTicketManagementByTicketNumber(@PathVariable int ticketNumber) {
-		return ticketService.findHelpdeskTicketByTicketNumber(ticketNumber);
-	}
-	
-	@GetMapping(path="/find/by/{raisedBy}")
-	public Ticket retrieveHelpdeskTicketByRaisedBy(@PathVariable String raisedBy) {
-		return ticketService.findHelpdeskTicketByRaisedBy(raisedBy);
-	}
-	
 	@DeleteMapping(path="/delete/{id}")
 	public ResponseEntity<Void> deleteHelpdeskTicketManagementById(@PathVariable int id) {
 		ticketService.deleteHelpdeskTicketById(id);
