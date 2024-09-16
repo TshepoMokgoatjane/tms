@@ -8,6 +8,7 @@ import za.co.tms.model.User;
 
 public interface UserRepository extends JpaRepository<User, Integer> {
 
+	List<User> findUserByUsername(String username);
 	List<User> findUserByEmail(String email);
 	List<User> findUserById(int id);
 	List<User> findUserByCellPhoneNumber(String cellPhoneNumber);

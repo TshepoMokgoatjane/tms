@@ -1,5 +1,6 @@
 package za.co.tms.model;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,10 +32,19 @@ public class User {
 	private Integer id;
 	
 	@Column(nullable = false)
+	private LocalDateTime dateCreated;
+	
+	@Column(nullable = true)
+	private LocalDateTime dateModified;
+	
+	@Column(nullable = false)
 	private String firstName;
 	
 	@Column(nullable = false)
 	private String lastName;
+	
+	@Column(nullable = false, unique = true)
+	public String username;
 	
 	@Column(nullable = false, unique = true)
 	private String email;

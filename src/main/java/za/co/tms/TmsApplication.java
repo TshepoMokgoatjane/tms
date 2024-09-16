@@ -17,13 +17,11 @@ public class TmsApplication {
 	
 	@Bean
 	public WebMvcConfigurer corsConfigurer() {
-		String [] origins = {"http://www.tltproduction.com", "http://tltproduction.com", "http://localhost:3000", 
-				"https://www.tltproduction.com", "https://tltproduction.com"};
 		return new WebMvcConfigurer() {
 			public void addCorsMappings(CorsRegistry registry) {
 				registry.addMapping("/**")
 				.allowedMethods("*")
-				.allowedOrigins(origins);
+				.allowedOrigins("http://localhost:3000");
 			}
 		};
 	}

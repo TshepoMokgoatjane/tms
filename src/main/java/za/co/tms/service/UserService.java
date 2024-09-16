@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import za.co.tms.model.Status;
@@ -14,10 +15,12 @@ import za.co.tms.repository.UserRepository;
 public class UserService {
 
 	private UserRepository userRepository;
+	private PasswordEncoder passwordEncoder;
 	
 	@Autowired
-	public UserService(UserRepository userRepository) {
+	public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
 		this.userRepository = userRepository;
+		this.passwordEncoder = passwordEncoder;
 	}
 	
 	public List<User> findAllUsers() {
@@ -36,6 +39,12 @@ public class UserService {
 		return user;
 	}
 	
+	public User findUserByUsername(String username) {
+		Predicate<? super User> predicate  = user -> user.getUsername().equalsIgnoreCase(username);
+		User user = userRepository.findUserByUsername(username).stream().filter(predicate).findFirst().get();
+		return user;
+	}
+	
 	public User findUserById(int id) {
 		Predicate<? super User> predicate = user -> user.getId() == id;
 		User user = userRepository.findUserById(id).stream().filter(predicate).findFirst().get();
@@ -44,6 +53,7 @@ public class UserService {
 	
 	public User addUser(User user) {
 		user.setId(null);
+		user.setPassword(passwordEncoder.encode(user.getPassword()));
 		return userRepository.save(user);
 	}
 	
