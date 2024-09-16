@@ -28,7 +28,7 @@ import za.co.tms.service.UserService;
 
 @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 @RestController
-@RequestMapping(path = "/users/auth")
+@RequestMapping(path = "/auth/user")
 public class UserController {
 
 	private UserService userService;
