@@ -16,12 +16,12 @@ public class UserInfoDetails implements UserDetails {
 	 */
 	private static final long serialVersionUID = 767511791471607899L;
 	
-	private String name;
+	private String username;
 	private String password;
 	private List<GrantedAuthority> grantedAuthorities;
 	
 	public UserInfoDetails(UserInfo userInfo) {
-		this.name = userInfo.getUsername();
+		this.username = userInfo.getUsername();
 		this.password = userInfo.getPassword();
 		this.grantedAuthorities = Arrays.stream(userInfo.getRoles().split(","))
 				.map(SimpleGrantedAuthority::new)
@@ -40,7 +40,7 @@ public class UserInfoDetails implements UserDetails {
 
 	@Override
 	public String getUsername() {
-		return this.name;
+		return this.username;
 	}
 
 	@Override

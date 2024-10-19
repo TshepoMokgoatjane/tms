@@ -30,10 +30,10 @@ public class UserInfoService implements UserDetailsService {
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		
-		Optional<UserInfo> userInfo = userInfoRepository.findByUsername(username);
+		Optional<UserInfo> userDetail = userInfoRepository.findByUsername(username);
 		
 		// Converting userDetail to UserDetails
-		return userInfo.map(UserInfoDetails::new)
+		return userDetail.map(UserInfoDetails::new)
 				.orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 	}
 	
