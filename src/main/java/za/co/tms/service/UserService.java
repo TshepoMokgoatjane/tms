@@ -29,26 +29,22 @@ public class UserService {
 	
 	public User findUserByCellPhoneNumber(String cellPhoneNumber) {
 		Predicate<? super User> predicate = user -> user.getCellPhoneNumber() == cellPhoneNumber;
-		User user = userRepository.findUserByCellPhoneNumber(cellPhoneNumber).stream().filter(predicate).findFirst().get();
-		return user;
+      	return userRepository.findUserByCellPhoneNumber(cellPhoneNumber).stream().filter(predicate).findFirst().get();
 	}
 	
 	public User findUserByEmail(String email) {
 		Predicate<? super User> predicate = user -> user.getEmail().equalsIgnoreCase(email);
-		User user = userRepository.findUserByEmail(email).stream().filter(predicate).findFirst().get();
-		return user;
+      	return userRepository.findUserByEmail(email).stream().filter(predicate).findFirst().get();
 	}
 	
 	public User findUserByUsername(String username) {
 		Predicate<? super User> predicate  = user -> user.getUsername().equalsIgnoreCase(username);
-		User user = userRepository.findUserByUsername(username).stream().filter(predicate).findFirst().get();
-		return user;
+      	return userRepository.findUserByUsername(username).stream().filter(predicate).findFirst().get();
 	}
 	
 	public User findUserById(int id) {
 		Predicate<? super User> predicate = user -> user.getId() == id;
-		User user = userRepository.findUserById(id).stream().filter(predicate).findFirst().get();
-		return user;
+      	return userRepository.findUserById(id).stream().filter(predicate).findFirst().get();
 	}
 	
 	public User addUser(User user) {
