@@ -16,6 +16,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,5 +50,21 @@ public class UserInfoServiceTest {
         when(userInfoRepository.findByUsername("unknown")).thenReturn(Optional.empty());
 
         assertThrows(UsernameNotFoundException.class, () -> userInfoService.loadUserByUsername("unknown"));
+    }
+
+    @Test
+    void addUser_shouldEncodePasswordAndSaveUser() {
+        UserInfo userInfo = new UserInfo();
+        userInfo.setUsername("tshepo");
+        userInfo.setPassword("plain123");
+        userInfo.setRoles("ROLE_USER");
+
+        when(passwordEncoder.encode("plain123")).thenReturn("encoded123");
+
+        String result = userInfoService.addUser(userInfo);
+
+        assertEquals("User Added Successfully", result);
+        verify(userInfoRepository).save(userInfo);
+        assertEquals("encoded123", userInfo.getPassword());
     }
 }
