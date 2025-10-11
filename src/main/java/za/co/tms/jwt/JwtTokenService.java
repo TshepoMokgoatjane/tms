@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,6 +26,9 @@ import io.jsonwebtoken.security.Keys;
 
 @Service
 public class JwtTokenService {
+
+    @Value("${jwt.secret}")
+    private String secret;
     
     private final JwtEncoder jwtEncoder;
 
@@ -52,9 +56,7 @@ public class JwtTokenService {
                 .encode(JwtEncoderParameters.from(claims))
                 .getTokenValue();
     }
-    
-    public static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437";
-    
+
     public String generateToken(String userName) {
         Map<String, Object> claims = new HashMap<>();
         return createToken(claims, userName);
@@ -70,7 +72,7 @@ public class JwtTokenService {
     }
 
     private Key getSignKey() {
-        byte[] keyBytes= Decoders.BASE64.decode(SECRET);
+        byte[] keyBytes= Decoders.BASE64.decode(secret);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 

@@ -3,6 +3,7 @@ package za.co.tms.jwt;
 import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,11 +20,11 @@ import za.co.tms.service.UserInfoService;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	
-	private JwtTokenService jwtTokenService;
-	private UserInfoService userInfoService;
+	private final JwtTokenService jwtTokenService;
+	private final UserInfoService userInfoService;
 	
 	@Autowired
-	public JwtAuthenticationFilter(JwtTokenService jwtTokenService, UserInfoService userInfoService) {
+	public JwtAuthenticationFilter(JwtTokenService jwtTokenService, @Lazy UserInfoService userInfoService) {
 		this.jwtTokenService = jwtTokenService;
 		this.userInfoService = userInfoService;
 	}
