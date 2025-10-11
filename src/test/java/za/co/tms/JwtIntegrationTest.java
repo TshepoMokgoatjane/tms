@@ -1,5 +1,6 @@
 package za.co.tms;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -7,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import za.co.tms.repository.UserInfoRepository;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -19,6 +21,15 @@ public class JwtIntegrationTest {
     @SuppressWarnings("unused")
     @Autowired
     private MockMvc mockMvc;
+
+    @SuppressWarnings("unused")
+    @Autowired
+    private UserInfoRepository userInfoRepository;
+
+    @BeforeEach
+    void cleanDatabase() {
+        userInfoRepository.deleteAll();
+    }
 
     @Test
     void shouldGenerateTokenAndAccessProtectedEndpoint() throws Exception {
@@ -43,12 +54,12 @@ public class JwtIntegrationTest {
                 .andExpect(status().isOk());
 
         // Step 2: Generate token
-        String loginJson = """
+        String loginJson = String.format("""
                     {
-                        "username": "tshepo",
+                        "username": "tshepo_%s",
                         "password": "secure123"
                     }
-                """;
+                """, uniqueSuffix);
 
         MvcResult result = mockMvc.perform(post("/auth/generateToken")
                 .contentType(MediaType.APPLICATION_JSON)
