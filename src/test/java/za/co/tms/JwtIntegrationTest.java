@@ -23,17 +23,19 @@ public class JwtIntegrationTest {
     @Test
     void shouldGenerateTokenAndAccessProtectedEndpoint() throws Exception {
         // Step 1: Add a user - Ensure the data below is unique (username, cellPhoneNumber, and email)
-        String userJson = """
+        String uniqueSuffix = String.valueOf(System.currentTimeMillis());
+
+        String userJson = String.format("""
                     {
-                        "username": "tshepom",
+                        "username": "tshepo_%s",
                         "password": "secure123",
                         "roles": "ROLE_USER",
-                        "cellPhoneNumber": "0123456782",
-                        "email": "tshepo@tiktok.com",
+                        "cellPhoneNumber": "012345678%s",
+                        "email": "tshepo%s@tiktok.com",
                         "firstName": "Tshepo",
                         "lastName": "Mokgoatjane"
                     }
-                """;
+                """, uniqueSuffix, uniqueSuffix.substring(uniqueSuffix.length() - 2), uniqueSuffix);
 
         mockMvc.perform(post("/auth/addNewUser")
                 .contentType(MediaType.APPLICATION_JSON)
