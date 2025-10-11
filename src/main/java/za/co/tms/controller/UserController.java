@@ -21,9 +21,9 @@ import za.co.tms.service.UserInfoService;
 @RequestMapping(path = "/auth")
 public class UserController {
 	
-	private UserInfoService userInfoService;
-	private JwtTokenService jwtTokenService;
-	private AuthenticationManager authenticationManager;
+	private final UserInfoService userInfoService;
+	private final JwtTokenService jwtTokenService;
+	private final AuthenticationManager authenticationManager;
 	
 	@Autowired
 	public UserController(UserInfoService userInfoService, JwtTokenService jwtTokenService, AuthenticationManager authenticationManager) {
@@ -58,4 +58,9 @@ public class UserController {
 	public String adminProfile() {
 		return "Welcome to Admin Profile";
 	}
+
+    @GetMapping("/welcome")
+    public String welcome() {
+        return "Welcome to the public endpoint!";
+    }
 }
