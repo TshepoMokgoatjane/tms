@@ -1,5 +1,6 @@
 package za.co.tms.service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import za.co.tms.model.Status;
 import za.co.tms.model.UserInfo;
 import za.co.tms.model.UserInfoDetails;
 import za.co.tms.repository.UserInfoRepository;
@@ -39,8 +41,10 @@ public class UserInfoService implements UserDetailsService {
 	
 	public String addUser(UserInfo userInfo) {
 		userInfo.setPassword(passwordEncoder.encode(userInfo.getPassword()));
+        userInfo.setDateCreated(LocalDateTime.now());
+        userInfo.setDateModified(LocalDateTime.now());
+        userInfo.setStatus(Status.OPEN);
 		userInfoRepository.save(userInfo);
 		return "User Added Successfully";
 	}
-
 }
