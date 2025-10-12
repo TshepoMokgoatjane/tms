@@ -17,9 +17,9 @@ public enum Room {
 	B2 ("Two Bedroom Apartment"),
 	C1 ("Bachelor Room");	
 	
-	private String roomDescription;
+	private final String roomDescription;
 	
-	private Room(String roomDescription) {
+	Room(String roomDescription) {
 		this.roomDescription = roomDescription;
 	}
 	
