@@ -9,4 +9,3 @@ public interface TenantRepository extends JpaRepository<Tenant, Integer> {
 
 	Optional<Tenant> findByNameIgnoreCase(String name);
 }
-
