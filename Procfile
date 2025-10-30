@@ -1,1 +1,1 @@
-web: java -jar target/tms.jar
+web: java -jar target/tms-0.0.1-SNAPSHOT.jar

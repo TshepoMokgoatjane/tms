@@ -4,10 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import za.co.tms.config.NoSecurityConfig;
 import za.co.tms.exception.TenantNotFoundException;
 import za.co.tms.model.Tenant;
 import za.co.tms.model.TenantStatus;
@@ -20,9 +23,12 @@ import java.util.Collections;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(TenantController.class)
+@SpringBootTest
+@AutoConfigureMockMvc(addFilters = false)
+@Import(NoSecurityConfig.class)
 public class TenantControllerTest {
 
     @Autowired
@@ -33,6 +39,12 @@ public class TenantControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Test
+    void debugActuatorHealthEndpoint() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+                .andDo(print());
+    }
 
     @Test
     void shouldReturnAllTenants() throws Exception {
@@ -112,7 +124,7 @@ public class TenantControllerTest {
         // Then
         mockMvc.perform(put("/tenants/update/{id}", tenantId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .contentType(objectMapper.writeValueAsString(updateTenant)))
+                .content(objectMapper.writeValueAsString(updateTenant)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Updated"))
                 .andExpect(jsonPath("$.surname").value("Tenant"));
@@ -158,8 +170,9 @@ public class TenantControllerTest {
                 .thenThrow(new TenantNotFoundException("Tenant with ID " + tenantId + " not found"));
 
         mockMvc.perform(get("/tenants/find/by-id/{id}", tenantId))
-                .andExpect(status().isOk())
-                .andExpect(content().string("Tenant with ID 999 not found"));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Tenant with ID 999 not found"))
+                .andExpect(jsonPath("$.errorCode").value("TENANT_NOT_FOUND"));
     }
 
     @Test
@@ -171,6 +184,7 @@ public class TenantControllerTest {
 
         mockMvc.perform(get("/tenants/find/by-name/{name}", name))
                 .andExpect(status().isNotFound())
-                .andExpect(content().string("Tenant with name 'nonexistent' not found"));
+                .andExpect(jsonPath("$.message").value("Tenant with name 'nonexistent' not found"))
+                .andExpect(jsonPath("$.errorCode").value("TENANT_NOT_FOUND"));
     }
 }

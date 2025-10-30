@@ -53,7 +53,7 @@ public class GlobalExceptionHandlerTest {
         tenant.setName("John");
         tenant.setSurname("Doe");
         tenant.setLeaseStartDate(LocalDate.of(2025, 10, 19));
-        tenant.setLeaseEndDate(LocalDate.of(2025, 10, 20));
+        tenant.setLeaseEndDate(LocalDate.of(2026, 10, 20));
 
         when(tenantService.addTenant(any(Tenant.class)))
                 .thenThrow(new InvalidLeasePeriodException("Lease end date must be after start date."));
@@ -63,7 +63,7 @@ public class GlobalExceptionHandlerTest {
                         "name": "John",
                         "surname": "Doe",
                         "leaseStartDate": "2025-10-19",
-                        "leaseEndDate": "2025-10-20"
+                        "leaseEndDate": "2026-10-20"
                     }
                 """;
 

@@ -11,7 +11,7 @@ import za.co.tms.service.TenantService;
 import java.util.List;
 
 @Validated
-@CrossOrigin(origins = "https://www.tltproduction.com", allowCredentials = "true")
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/tenants")
 public class TenantController {

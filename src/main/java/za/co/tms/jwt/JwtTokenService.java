@@ -107,5 +107,3 @@ public class JwtTokenService {
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 }
-
-
