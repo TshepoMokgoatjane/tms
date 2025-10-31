@@ -1,16 +1,27 @@
 package za.co.tms.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Data
+import java.util.Map;
+
+@Getter
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @EqualsAndHashCode
 public class ErrorResponse {
 
     private String errorCode;
     private String message;
+    private Map<String, String> errors;
+
+    public ErrorResponse(String errorCode, String message) {
+        this.errorCode = errorCode;
+        this.message = message;
+    }
+
+    public ErrorResponse(String errorCode, String message, Map<String, String> errors) {
+        this.errorCode = errorCode;
+        this.message = message;
+        this.errors = errors;
+    }
 }

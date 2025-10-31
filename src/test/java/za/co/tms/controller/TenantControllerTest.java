@@ -100,6 +100,75 @@ public class TenantControllerTest {
     }
 
     @Test
+    void shouldReturn400WhenNameIsMissing() throws Exception {
+        Tenant tenant = new Tenant();
+        tenant.setName(TENANT_SURNAME);
+        tenant.setTenantStatus(TenantStatus.ACTIVE);
+        tenant.setLeaseStartDate(LocalDate.now());
+        tenant.setLeaseEndDate(LocalDate.now().plusDays(30));
+        tenant.setRental(BigDecimal.valueOf(5000));
+
+        mockMvc.perform(post(CREATE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(tenant)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors").exists());
+    }
+
+    @Test
+    void shouldReturn400WhenEmailIsInvalid() throws Exception {
+        Tenant tenant = new Tenant();
+        tenant.setName(TENANT_NAME);
+        tenant.setSurname(TENANT_SURNAME);
+        tenant.setEmail("invalid-email");
+        tenant.setTenantStatus(TenantStatus.ACTIVE);
+        tenant.setLeaseStartDate(LocalDate.now());
+        tenant.setLeaseEndDate(LocalDate.now().plusDays(30));
+        tenant.setRental(BigDecimal.valueOf(5000));
+
+        mockMvc.perform(post(CREATE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(tenant)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors").exists());
+    }
+
+    @Test
+    void shouldReturn400WhenLeaseEndDateIsBeforeStartDate() throws Exception {
+        Tenant tenant = new Tenant();
+        tenant.setName(TENANT_NAME);
+        tenant.setSurname(TENANT_SURNAME);
+        tenant.setTenantStatus(TenantStatus.ACTIVE);
+        tenant.setLeaseStartDate(LocalDate.now());
+        tenant.setLeaseEndDate(LocalDate.now().minusDays(1)); // Invalid
+        tenant.setRental(BigDecimal.valueOf(5000));
+
+        mockMvc.perform(post(CREATE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(tenant)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors").exists());
+    }
+
+    @Test
+    void shouldReturn400WhenRentalIsNegative() throws Exception {
+        Tenant tenant = new Tenant();
+        tenant.setName(TENANT_NAME);;
+        tenant.setSurname(TENANT_SURNAME);
+        tenant.setTenantStatus(TenantStatus.ACTIVE);
+        tenant.setLeaseStartDate(LocalDate.now());
+        tenant.setLeaseEndDate(LocalDate.now().plusDays(30));
+        tenant.setRental(BigDecimal.valueOf(-1000));    // Invalid rental
+
+        mockMvc.perform(post(CREATE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(tenant)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.errors.rental").value("Rental must be zero or positive"));
+    }
+
+    @Test
     void shouldReturnTenantsByName() throws Exception {
 
         // Get

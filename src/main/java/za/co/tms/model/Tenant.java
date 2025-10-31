@@ -1,28 +1,22 @@
 package za.co.tms.model;
 
 import jakarta.persistence.Column;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import jakarta.validation.constraints.PastOrPresent;
-import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.*;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper=false)
@@ -75,6 +69,7 @@ public class Tenant extends AuditModel implements Serializable {
     private boolean depositPaid;
 
     @Column(precision = 10, scale = 2)
+    @DecimalMin(value = "0.0", inclusive = true, message = "Rental must be zero or positive")
     private BigDecimal rental;
 
     private LocalDate paymentDate;
