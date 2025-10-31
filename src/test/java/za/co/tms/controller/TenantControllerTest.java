@@ -31,6 +31,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(NoSecurityConfig.class)
 public class TenantControllerTest {
 
+    private static final String BASE_URL = "/tenants";
+    private static final String FIND_ALL = BASE_URL + "/find/all";
+    private static final String FIND_BY_NAME = BASE_URL + "/find/by-name/{name}";
+    private static final String FIND_BY_ID = BASE_URL + "/find/by-id/{id}";
+    private static final String CREATE = BASE_URL + "/create";
+    private static final String UPDATE = BASE_URL + "/update/{id}";
+    private static final String DELETE = BASE_URL + "/delete/{id}";
+    private static final String AUTH_CHECK = BASE_URL + "/auth/check";
+
+    private static final String TENANT_NAME = "Tshepo";
+    private static final String TENANT_SURNAME = "Mokgoatjane";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -51,17 +63,17 @@ public class TenantControllerTest {
 
         // Get
         Tenant tenant = new Tenant();
-        tenant.setName("Tshepo");
-        tenant.setSurname("Mokgoatjane");
+        tenant.setName(TENANT_NAME);
+        tenant.setSurname(TENANT_SURNAME);
         tenant.setTenantStatus(TenantStatus.ACTIVE);
 
         // When
         when(tenantService.findAllTenants()).thenReturn(Collections.singletonList(tenant));
 
         // Then
-        mockMvc.perform(get("/tenants/find/all"))
+        mockMvc.perform(get(FIND_ALL))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("Tshepo"));
+                .andExpect(jsonPath("$[0].name").value(TENANT_NAME));
     }
 
     @Test
@@ -69,8 +81,8 @@ public class TenantControllerTest {
 
         // Get
         Tenant tenant = new Tenant();
-        tenant.setName("Tshepo");
-        tenant.setSurname("Mokgoatjane");
+        tenant.setName(TENANT_NAME);
+        tenant.setSurname(TENANT_SURNAME);
         tenant.setTenantStatus(TenantStatus.ACTIVE);
         tenant.setLeaseStartDate(LocalDate.now());
         tenant.setLeaseEndDate(LocalDate.now().plusDays(30));
@@ -80,11 +92,11 @@ public class TenantControllerTest {
         when(tenantService.addTenant(any(Tenant.class))).thenReturn(tenant);
 
         // Then
-        mockMvc.perform(post("/tenants/create")
+        mockMvc.perform(post(CREATE)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(tenant)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Tshepo"));
+                .andExpect(jsonPath("$.name").value(TENANT_NAME));
     }
 
     @Test
@@ -92,7 +104,7 @@ public class TenantControllerTest {
 
         // Get
         Tenant tenant = new Tenant();
-        tenant.setName("Tshepo");
+        tenant.setName(TENANT_NAME);
 
         // When
         when(tenantService.findTenantByName("tshepo")).thenReturn(tenant);
@@ -122,7 +134,7 @@ public class TenantControllerTest {
                 .thenReturn(updateTenant);
 
         // Then
-        mockMvc.perform(put("/tenants/update/{id}", tenantId)
+        mockMvc.perform(put(UPDATE, tenantId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateTenant)))
                 .andExpect(status().isOk())
@@ -137,7 +149,7 @@ public class TenantControllerTest {
         // No need to mock return value for void methods, just verify interaction
         Mockito.doNothing().when(tenantService).deleteTenantById(tenantId);
 
-        mockMvc.perform(delete("/tenants/delete/{id}", tenantId))
+        mockMvc.perform(delete(DELETE, tenantId))
                 .andExpect(status().isNoContent());
 
         Mockito.verify(tenantService).deleteTenantById(tenantId);
@@ -149,13 +161,13 @@ public class TenantControllerTest {
 
         Tenant tenant = new Tenant();
         tenant.setId(tenantId);
-        tenant.setName("Tshepo");
-        tenant.setSurname("Mokgoatjane");
+        tenant.setName(TENANT_NAME);
+        tenant.setSurname(TENANT_SURNAME);
         tenant.setTenantStatus(TenantStatus.ACTIVE);
 
         when(tenantService.findTenantById(tenantId)).thenReturn(tenant);
 
-        mockMvc.perform(get("/tenants/find/by-id/{id}", tenantId))
+        mockMvc.perform(get(FIND_BY_ID, tenantId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(tenantId))
                 .andExpect(jsonPath("$.name").value("Tshepo"))
@@ -169,7 +181,7 @@ public class TenantControllerTest {
         when(tenantService.findTenantById(tenantId))
                 .thenThrow(new TenantNotFoundException("Tenant with ID " + tenantId + " not found"));
 
-        mockMvc.perform(get("/tenants/find/by-id/{id}", tenantId))
+        mockMvc.perform(get(FIND_BY_ID, tenantId))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Tenant with ID 999 not found"))
                 .andExpect(jsonPath("$.errorCode").value("TENANT_NOT_FOUND"));
@@ -182,7 +194,7 @@ public class TenantControllerTest {
         when(tenantService.findTenantByName(name))
                 .thenThrow(new TenantNotFoundException("Tenant with name '" + name + "' not found"));
 
-        mockMvc.perform(get("/tenants/find/by-name/{name}", name))
+        mockMvc.perform(get(FIND_BY_NAME, name))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Tenant with name 'nonexistent' not found"))
                 .andExpect(jsonPath("$.errorCode").value("TENANT_NOT_FOUND"));
@@ -190,7 +202,7 @@ public class TenantControllerTest {
 
     @Test
     void shouldReturnSuccessFromBasicAuthCheck() throws Exception {
-        mockMvc.perform(get("/tenants/auth/check"))
+        mockMvc.perform(get(AUTH_CHECK))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Success"));
     }
