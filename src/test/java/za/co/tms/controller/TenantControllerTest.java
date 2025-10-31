@@ -187,4 +187,11 @@ public class TenantControllerTest {
                 .andExpect(jsonPath("$.message").value("Tenant with name 'nonexistent' not found"))
                 .andExpect(jsonPath("$.errorCode").value("TENANT_NOT_FOUND"));
     }
+
+    @Test
+    void shouldReturnSuccessFromBasicAuthCheck() throws Exception {
+        mockMvc.perform(get("/tenants/auth/check"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Success"));
+    }
 }
