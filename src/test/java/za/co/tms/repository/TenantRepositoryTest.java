@@ -20,6 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ActiveProfiles("test")
 public class TenantRepositoryTest {
 
+    private static final String TENANT_NAME = "Tshepo";
+    private static final String TENANT_SURNAME = "Mokgoatjane";
+
     @Autowired
     private TenantRepository tenantRepository;
 
@@ -28,8 +31,8 @@ public class TenantRepositoryTest {
     void shouldFindByNameIgnoreCase() {
         // Given
         Tenant tenant = new Tenant();
-        tenant.setName("Tshepo");
-        tenant.setSurname("Mokgoatjane");
+        tenant.setName(TENANT_NAME);
+        tenant.setSurname(TENANT_SURNAME);
         tenant.setTenantStatus(TenantStatus.ACTIVE);
         tenant.setLeaseStartDate(LocalDate.now().minusDays(1));
         tenant.setLeaseEndDate(LocalDate.now().plusDays(30));
@@ -40,7 +43,7 @@ public class TenantRepositoryTest {
 
         // Then
         assertTrue(found.isPresent());
-        assertEquals("Tshepo", found.get().getName());
+        assertEquals(TENANT_NAME, found.get().getName());
     }
 
     @Test
