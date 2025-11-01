@@ -1,6 +1,9 @@
 package za.co.tms.model;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
 
 import java.util.Map;
 

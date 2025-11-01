@@ -1,5 +1,6 @@
 package za.co.tms.model;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -23,7 +24,8 @@ public class Ticket implements Serializable {
 	/**
 	 * Generated a serial version UID
 	 */
-	private static final long serialVersionUID = -8045581293415893683L;
+	@Serial
+    private static final long serialVersionUID = -8045581293415893683L;
 	
 	@Id
 	@Column(updatable = false, nullable = false)
