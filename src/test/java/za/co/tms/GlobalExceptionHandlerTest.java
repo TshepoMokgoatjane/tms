@@ -52,7 +52,7 @@ public class GlobalExceptionHandlerTest {
         Tenant tenant = new Tenant();
         tenant.setName("John");
         tenant.setSurname("Doe");
-        tenant.setLeaseStartDate(LocalDate.of(2025, 10, 19));
+        tenant.setLeaseStartDate(LocalDate.of(2025, 11, 1));
         tenant.setLeaseEndDate(LocalDate.of(2026, 10, 20));
 
         when(tenantService.addTenant(any(Tenant.class)))
@@ -62,7 +62,16 @@ public class GlobalExceptionHandlerTest {
                     {
                         "name": "John",
                         "surname": "Doe",
-                        "leaseStartDate": "2025-10-19",
+                        "tenantStatus": "ACTIVE",
+                        "roomNumber": "A11",
+                        "cellPhoneNumber": "0123456789",
+                        "alternativeCellPhoneNumber": "0987654321",
+                        "numberOfTenantsInUnit": "1",
+                        "paymentDay": "DAY_25",
+                        "email": "gregg@taboo.com",
+                        "rental": "5000",
+                        "tenantBehaviour": "GOOD",
+                        "leaseStartDate": "2025-11-01",
                         "leaseEndDate": "2026-10-20"
                     }
                 """;

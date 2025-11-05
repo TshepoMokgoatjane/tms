@@ -12,7 +12,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import za.co.tms.config.NoSecurityConfig;
 import za.co.tms.exception.TenantNotFoundException;
+import za.co.tms.model.PaymentDay;
+import za.co.tms.model.Room;
 import za.co.tms.model.Tenant;
+import za.co.tms.model.TenantBehaviour;
 import za.co.tms.model.TenantStatus;
 import za.co.tms.service.TenantService;
 
@@ -42,6 +45,10 @@ public class TenantControllerTest {
 
     private static final String TENANT_NAME = "Tshepo";
     private static final String TENANT_SURNAME = "Mokgoatjane";
+    private static final String TENANT_EMAIL = "dummy@email.com";
+    private static final String CELLPHONE_NUMBER = "0123456789";
+    private static final String ALTERNATIVE_CELLPHONE_NUMBER = "0987654321";
+    private static final int NUMBER_OF_TENANTS_IN_UNIT = 1;
 
     @Autowired
     private MockMvc mockMvc;
@@ -83,10 +90,17 @@ public class TenantControllerTest {
         Tenant tenant = new Tenant();
         tenant.setName(TENANT_NAME);
         tenant.setSurname(TENANT_SURNAME);
+        tenant.setCellPhoneNumber(CELLPHONE_NUMBER);
+        tenant.setAlternativeCellPhoneNumber(ALTERNATIVE_CELLPHONE_NUMBER);
+        tenant.setRoomNumber(Room.A11);
+        tenant.setNumberOfTenantsInUnit(NUMBER_OF_TENANTS_IN_UNIT);
+        tenant.setPaymentDay(PaymentDay.DAY_1);
+        tenant.setEmail(TENANT_EMAIL);
         tenant.setTenantStatus(TenantStatus.ACTIVE);
         tenant.setLeaseStartDate(LocalDate.now());
         tenant.setLeaseEndDate(LocalDate.now().plusDays(30));
         tenant.setRental(BigDecimal.valueOf(5000));
+        tenant.setTenantBehaviour(TenantBehaviour.GOOD);
 
         // When
         when(tenantService.addTenant(any(Tenant.class))).thenReturn(tenant);

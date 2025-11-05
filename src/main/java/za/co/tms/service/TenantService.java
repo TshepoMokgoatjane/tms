@@ -10,6 +10,7 @@ import za.co.tms.model.TenantStatus;
 import za.co.tms.repository.TenantRepository;
 import za.co.tms.validator.TenantValidator;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -83,7 +84,7 @@ public class TenantService {
         existingTenant.setLeaseStartDate(updatedTenant.getLeaseStartDate());
         existingTenant.setLeaseEndDate(updatedTenant.getLeaseEndDate());
         existingTenant.setNumberOfTenantsInUnit(updatedTenant.getNumberOfTenantsInUnit());
-        existingTenant.setPrepaidElectricityMeterNumber(updatedTenant.getPrepaidElectricityMeterNumber());
+        existingTenant.setPaymentDay(updatedTenant.getPaymentDay());
         existingTenant.setDepositPaid(updatedTenant.isDepositPaid());
         existingTenant.setRental(updatedTenant.getRental());
         existingTenant.setTenantBehaviour(updatedTenant.getTenantBehaviour());
@@ -91,4 +92,28 @@ public class TenantService {
 
         return tenantRepository.save(existingTenant);
 	}
+
+    /*
+    This method can be used to:
+    Scheduled jobs to send reminders
+    Dashboards to highlight due payments
+    Reports to filter tenants whose rent is due today
+     */
+    public boolean isRentDueToday(Tenant tenant, LocalDate today) {
+        return tenant.getPaymentDay().matches(today);
+    }
+
+
+    /*
+    This method:
+    Accepts a list of all tenants.
+    Filters tenants whose paymentDay matches today's date using your existing isRentDueToday() method above.
+    Returns a list of tenants with rent due today.
+     */
+    public List<Tenant> getTenantsWithRentDueToday(List<Tenant> allTenants) {
+        LocalDate today = LocalDate.now();
+        return allTenants.stream()
+                .filter(tenant -> tenant.getPaymentDay() != null && isRentDueToday(tenant, today))
+                .toList();
+    }
 }

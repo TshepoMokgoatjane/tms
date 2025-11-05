@@ -1,14 +1,18 @@
 package za.co.tms.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import za.co.tms.dto.TenantResponseDTO;
 import za.co.tms.model.Tenant;
 import za.co.tms.service.TenantService;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Validated
 @CrossOrigin(origins = "*")
@@ -51,6 +55,8 @@ public class TenantController {
 	}
 	
 	@PostMapping("/create")
+    @Operation(summary = "Create a new tenant", description = "Registers a new tenant with lease and contact details")
+    @ApiResponse(responseCode = "200", description = "Tenant created successfully")
 	public ResponseEntity<Tenant> createTenant(@Valid @RequestBody Tenant tenant) {
 		Tenant createdTenant = tenantService.addTenant(tenant);
 		
@@ -62,4 +68,13 @@ public class TenantController {
 
         return ResponseEntity.ok("Success");
 	}
+
+    @GetMapping("rent-due-today")
+    public ResponseEntity<List<TenantResponseDTO>> getTenantDueToday() {
+        List<Tenant> allTenants = tenantService.findAllTenants();
+        List<Tenant> dueToday = tenantService.getTenantsWithRentDueToday(allTenants);
+        List<TenantResponseDTO> response = dueToday.stream().map(TenantResponseDTO:: new)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
+    }
 }
