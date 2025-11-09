@@ -8,6 +8,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import za.co.tms.model.Payment;
+import za.co.tms.model.PaymentStatus;
 import za.co.tms.repository.PaymentRepository;
 
 import java.time.LocalDateTime;
@@ -50,5 +51,41 @@ public class PaymentController {
         }
 
         return ResponseEntity.ok(payments);
+    }
+
+    @PutMapping("/{paymentId}/mark-paid")
+    @Operation(summary = "Mark payment as PAID", description = "Updates the payment status to PAID for the given payment ID")
+    public ResponseEntity<Payment> markPaymentAsPaid(
+            @Parameter(description = "ID of the payment to mark as PAID")
+            @PathVariable Long paymentId
+    ) {
+        Optional<Payment> optionalPayment = paymentRepository.findById(paymentId);
+        if (optionalPayment.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Payment payment = optionalPayment.get();
+        payment.setPaymentStatus(PaymentStatus.PAID);
+        Payment updatePayment = paymentRepository.save(payment);
+
+        return ResponseEntity.ok(updatePayment);
+    }
+
+    @Operation(summary = "Mark payment as FAILED", description = "Updates the payment status to FAILED for the given payment ID")
+    @PutMapping("/payments/{paymentId}/mark-failed")
+    public ResponseEntity<Payment> markPaymentAsFailed(
+            @Parameter(description = "ID of the payment to mark as FAILED")
+            @PathVariable Long paymentId
+    ) {
+        Optional<Payment> optionalPayment = paymentRepository.findById(paymentId);
+        if (optionalPayment.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Payment payment = optionalPayment.get();
+        payment.setPaymentStatus(PaymentStatus.FAILED);
+        paymentRepository.save(payment);
+
+        return ResponseEntity.ok(payment);
     }
 }
