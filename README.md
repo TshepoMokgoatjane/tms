@@ -1,11 +1,5 @@
 # 🚀 Tenant Management System (TMS)
-
-!Build Status
-!Tests
-!Coverage
-!Java
-!Spring Boot
-!License
+```azure
 
 A **modern full-stack, cloud-ready** tenant management application designed to streamline property operations, tenant communication, payments, and maintenance workflows - all built with **Spring Boot 3, React, MySQL/PostgreSQL, AWS**, and industry best practis.
 
@@ -30,27 +24,27 @@ The high-level system architecture for the Tenant Management System is illustrat
 
 ```
                            ┌────────────────────────────┐
-                           │        React Frontend       │
-                           │  Tenant / Admin Dashboards  │
-                           └──────────────┬──────────────┘
+                           │        React Frontend      │
+                           │  Tenant / Admin Dashboards │
+                           └──────────────┬─────────────┘
                                           │ HTTPS (REST)
                                           ▼
                         ┌──────────────────────────────────────┐
-                        │        Spring Boot Backend API        │
-                        │ (Controllers • Services • Repos)      │
+                        │        Spring Boot Backend API       │
+                        │ (Controllers • Services • Repos)     │
                         └───────────────┬───────────────┬──────┘
                                         │               │
                            ┌────────────┘               └───────────────┐
                            ▼                                            ▼
                 ┌──────────────────────┐                   ┌────────────────────────┐
-                │  Authentication       │                   │     Notification       │
-                │  JWT + Google OAuth2  │                   │ Email (SMTP) + SMS     │
+                │  Authentication      │                   │     Notification       │
+                │  JWT + Google OAuth2 │                   │ Email (SMTP) + SMS     │
                 └──────────────────────┘                   │ (Gmail + Twilio APIs)  │
                                                            └─────────────┬──────────┘
                                                                          │
                                                                          ▼
                                                            ┌────────────────────────┐
-                                                           │  Scheduler (Quartz-like │
+                                                           │  Scheduler (Quartz-like│
                                                            │  Rent Reminders + Auto │
                                                            │  Payment Creation      │
                                                            └─────────────┬──────────┘
@@ -61,7 +55,7 @@ The high-level system architecture for the Tenant Management System is illustrat
                                         │ Spring Data JPA • Hibernate ORM                │
                                         ├────────────────────────────────────────────────┤
                                         │ MySQL / PostgreSQL (Production)                │
-                                        │ H2 (Testing)                                    │
+                                        │ H2 (Testing)                                   │
                                         └────────────────────────────────────────────────┘
 
                      ┌─────────────────────────────────────────────────────────────────────────┐
