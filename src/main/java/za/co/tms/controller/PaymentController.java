@@ -47,12 +47,12 @@ public class PaymentController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Long tenantId,
 
-            @Parameter(description = "Start date for filtering", required = false)
+            @Parameter(description = "Start date for filtering")
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime startDate,
 
-            @Parameter(description = "End date for filtering", required = false)
+            @Parameter(description = "End date for filtering")
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime endDate) {

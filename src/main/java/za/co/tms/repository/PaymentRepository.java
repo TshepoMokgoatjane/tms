@@ -5,7 +5,6 @@ import za.co.tms.model.Payment;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     List<Payment> findByTenantId(Long tenantId);
