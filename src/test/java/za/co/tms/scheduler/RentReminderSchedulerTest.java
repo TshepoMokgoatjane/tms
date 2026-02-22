@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.boot.context.config.ConfigData;
 import za.co.tms.model.Payment;
 import za.co.tms.model.PaymentDay;
 import za.co.tms.model.Tenant;
@@ -17,7 +16,7 @@ import za.co.tms.service.TenantService;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.Optional;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -55,7 +54,7 @@ public class RentReminderSchedulerTest {
 
         when(tenantService.findAllTenants()).thenReturn(Collections.singletonList(tenant));
         when(tenantService.getTenantsWithRentDueToday(anyList())).thenReturn(Collections.singletonList(tenant));
-        when(paymentRepository.findByTenantIdAndPaymentDateBetween(anyLong(), any(), any())).thenReturn(Optional.empty());
+        when(paymentRepository.findByTenantIdAndPaymentDateBetween(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(List.of());
 
         rentReminderScheduler.checkRentDueToday();
 
@@ -77,7 +76,7 @@ public class RentReminderSchedulerTest {
 
         when(tenantService.findAllTenants()).thenReturn(Collections.singletonList(tenant));
         when(tenantService.getTenantsWithRentDueToday(anyList())).thenReturn(Collections.singletonList(tenant));
-        when(paymentRepository.findByTenantIdAndPaymentDateBetween(anyLong(), any(), any())).thenReturn(Optional.of(existingPayment));
+        when(paymentRepository.findByTenantIdAndPaymentDateBetween(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(List.of(existingPayment));
 
         rentReminderScheduler.checkRentDueToday();
 

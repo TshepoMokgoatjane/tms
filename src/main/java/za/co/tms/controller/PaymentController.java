@@ -15,6 +15,7 @@ import za.co.tms.repository.PaymentRepository;
 import za.co.tms.repository.TenantRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -42,7 +43,7 @@ public class PaymentController {
 
     @Operation(summary = "Get all payments for a tenant", description = "Returns all payment records for the specified tenant ID")
     @GetMapping("/tenant/{tenantId}")
-    public ResponseEntity<Optional<Payment>> getPaymentsByTenant(
+    public ResponseEntity<List<Payment>> getPaymentsByTenant(
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Long tenantId,
 
@@ -56,7 +57,7 @@ public class PaymentController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime endDate) {
 
-        Optional<Payment> payments;
+        List<Payment> payments;
 
         if (startDate != null && endDate != null) {
             payments = paymentRepository.findByTenantIdAndPaymentDateBetween(tenantId, startDate, endDate);

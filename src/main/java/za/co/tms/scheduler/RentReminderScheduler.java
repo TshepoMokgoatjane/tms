@@ -17,7 +17,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Component
@@ -69,9 +68,9 @@ public class RentReminderScheduler {
                     // Prevent duplicate payment
                     LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
                     LocalDateTime endOfDay = startOfDay.plusDays(1).minusSeconds(1);
-                    Optional<Payment> existingPayment = paymentRepository.findByTenantIdAndPaymentDateBetween(tenant.getId().longValue(), startOfDay, endOfDay);
+                    List<Payment> existingPayment = paymentRepository.findByTenantIdAndPaymentDateBetween(tenant.getId().longValue(), startOfDay, endOfDay);
 
-                    if (existingPayment.isPresent()) {
+                    if (existingPayment.stream().findAny().isPresent()) {
                         log.info("Payment already exists for tenant: {} {} on {}", tenant.getName(), tenant.getSurname(), LocalDate.now());
                         return;
                     }
