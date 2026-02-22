@@ -156,7 +156,7 @@ The system is built with a modern, cloud-ready architecture featuring:
 - **AWS Elastic Beanstalk** (Deployment)
 - **AWS RDS (MySQL)**
 - **Docker containerization**
-- **CI-friendly Maven configuration
+- **CI-friendly** Maven configuration
 
 ### Testing
 - **JUnit5**
