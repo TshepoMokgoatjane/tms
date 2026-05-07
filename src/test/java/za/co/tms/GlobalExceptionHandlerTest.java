@@ -91,6 +91,6 @@ public class GlobalExceptionHandlerTest {
         mockMvc.perform(MockMvcRequestBuilders.get("/tenants/find/all"))
                 .andExpect(MockMvcResultMatchers.status().isInternalServerError())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.errorCode").value("INTERNAL_SERVER_ERROR"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("An unexpected error occurred: Unexpected error"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("An unexpected error occurred"));
     }
 }

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import za.co.tms.model.Payment;
 import za.co.tms.model.PaymentMethod;
 import za.co.tms.model.PaymentStatus;
@@ -40,55 +41,60 @@ public class RentReminderScheduler {
     Every day
      */
     @Scheduled(cron = "0 0 8 * * *")
+    @Transactional
     public void checkRentDueToday() {
         List<Tenant> allTenants = tenantService.findAllTenants();
         List<Tenant> dueToday = tenantService.getTenantsWithRentDueToday(allTenants);
 
         if (dueToday.isEmpty()) {
             log.info("No tenants have rent due today ({})", LocalDate.now());
-        } else {
-            log.info("Tenants with rent due today ({}):", LocalDate.now());
-            dueToday.forEach(tenant ->
-                    log.info("Tenant: {} {}, Room: {}, Rent: {}, Payment Day: {}",
-                            tenant.getTitle() + " " + tenant.getName(),
-                            tenant.getSurname(),
-                            tenant.getRoomNumber(),
-                            tenant.getRental(),
-                            tenant.getPaymentDay().getLabel()
-                    )
-            );
+            return;
+        }
 
-            log.info("Sending rent reminders to {} tenants...", dueToday.size());
-            dueToday.forEach(tenant ->  {
-                try {
-                    emailService.sendRentReminder(tenant);
-                    smsService.sendRentReminderSms(tenant);
-                    log.info("Reminder sent to: {} {}", tenant.getName(), tenant.getSurname());
+        log.info("Tenants with rent due today ({}):", LocalDate.now());
+        dueToday.forEach(tenant ->
+                log.info("Tenant: {} {}, Room: {}, Rent: {}, Payment Day: {}",
+                        tenant.getTitle() + " " + tenant.getName(),
+                        tenant.getSurname(),
+                        tenant.getRoomNumber(),
+                        tenant.getRental(),
+                        tenant.getPaymentDay().getLabel()
+                )
+        );
 
-                    // Prevent duplicate payment
-                    LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-                    LocalDateTime endOfDay = startOfDay.plusDays(1).minusSeconds(1);
-                    List<Payment> existingPayment = paymentRepository.findByTenantIdAndPaymentDateBetween(tenant.getId().longValue(), startOfDay, endOfDay);
+        log.info("Sending rent reminders to {} tenants...", dueToday.size());
+        dueToday.forEach(this::processRentReminder);
+    }
 
-                    if (existingPayment.stream().findAny().isPresent()) {
-                        log.info("Payment already exists for tenant: {} {} on {}", tenant.getName(), tenant.getSurname(), LocalDate.now());
-                        return;
-                    }
+    private void processRentReminder(Tenant tenant) {
+        try {
+            // Prevent duplicate payment
+            LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+            LocalDateTime endOfDay = startOfDay.plusDays(1).minusSeconds(1);
 
-                    // Create a PENDING payment record
-                    Payment payment = new Payment();
-                    payment.setTenant(tenant);
-                    payment.setAmount(tenant.getRental() != null ? tenant.getRental() : BigDecimal.ZERO);
-                    payment.setPaymentDate(LocalDateTime.now());
-                    payment.setPaymentMethod(PaymentMethod.EFT); // Default method
-                    payment.setPaymentStatus(PaymentStatus.PENDING);
+            if (paymentRepository.existsByTenantIdAndPaymentDateBetween(tenant.getId().longValue(), startOfDay, endOfDay)) {
+                log.info("Payment already exists for tenant: {} {} on {}", tenant.getName(), tenant.getSurname(), LocalDate.now());
+                return;
+            }
 
-                    paymentRepository.save(payment);
-                    log.info("Payment record created for: {} {}", tenant.getName(), tenant.getSurname());
-                } catch (Exception e) {
-                    log.error("Failed to create payment for tenant: {} {}. Error: {}", tenant.getName(), tenant.getSurname(), e.getMessage());
-                }
-            });
+            // Send reminders
+            emailService.sendRentReminder(tenant);
+            smsService.sendRentReminderSms(tenant);
+            log.info("Reminder sent to: {} {}", tenant.getName(), tenant.getSurname());
+
+            // Create a PENDING payment record
+            Payment payment = new Payment();
+            payment.setTenant(tenant);
+            payment.setAmount(tenant.getRental() != null ? tenant.getRental() : BigDecimal.ZERO);
+            payment.setPaymentDate(LocalDateTime.now());
+            payment.setPaymentMethod(PaymentMethod.EFT);
+            payment.setPaymentStatus(PaymentStatus.PENDING);
+
+            paymentRepository.save(payment);
+            log.info("Payment record created for: {} {}", tenant.getName(), tenant.getSurname());
+        } catch (Exception e) {
+            log.error("Failed to process rent reminder for tenant: {} {}. Error: {}",
+                    tenant.getName(), tenant.getSurname(), e.getMessage(), e);
         }
     }
 }

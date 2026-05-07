@@ -28,13 +28,6 @@ public class PaymentController {
 
     private final PaymentRepository paymentRepository;
 
-    private static final String TENANT_NAME = "Tshepo";
-    private static final String TENANT_SURNAME = "Mokgoatjane";
-    private static final String TENANT_EMAIL = "dummy@email.com";
-    private static final String CELLPHONE_NUMBER = "0123456789";
-    private static final String ALTERNATIVE_CELLPHONE_NUMBER = "0987654321";
-    private static final int NUMBER_OF_TENANTS_IN_UNIT = 1;
-
     @Autowired
     public PaymentController(PaymentRepository paymentRepository, TenantRepository tenantRepository) {
         this.paymentRepository = paymentRepository;

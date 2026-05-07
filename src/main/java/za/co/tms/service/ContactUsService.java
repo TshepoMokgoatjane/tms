@@ -12,7 +12,7 @@ import za.co.tms.repository.ContactUsRepository;
 @Service
 public class ContactUsService {
 	
-	private ContactUsRepository contactUsRepository;
+	private final ContactUsRepository contactUsRepository;
 	
 	@Autowired
 	public ContactUsService(ContactUsRepository contactUsRepository) {
@@ -25,32 +25,27 @@ public class ContactUsService {
 	
 	public ContactUs findContactUsById(int id) {
 		Predicate<? super ContactUs> predicate = contactUs -> contactUs.getId() == id;
-		ContactUs contactUs = contactUsRepository.findContactUsById(id).stream().filter(predicate).findFirst().get();
-		return contactUs;
+        return contactUsRepository.findContactUsById(id).stream().filter(predicate).findFirst().get();
 	}
 	
 	public ContactUs findContactUsByFirstName(String firstName) {
 		Predicate<? super ContactUs> predicate = contactUs -> contactUs.getFirstName().equalsIgnoreCase(firstName);
-		ContactUs contactUs = contactUsRepository.findContactUsByFirstName(firstName).stream().filter(predicate).findFirst().get();
-		return contactUs;
+        return contactUsRepository.findContactUsByFirstName(firstName).stream().filter(predicate).findFirst().get();
 	}
 	
 	public ContactUs findContactUsByLastName(String lastName) {
 		Predicate<? super ContactUs> predicate = contactUs -> contactUs.getLastName().equalsIgnoreCase(lastName);
-		ContactUs contactUs = contactUsRepository.findContactUsByLastName(lastName).stream().filter(predicate).findFirst().get();
-		return contactUs;
+        return contactUsRepository.findContactUsByLastName(lastName).stream().filter(predicate).findFirst().get();
 	}
 	
-	public ContactUs findContactUsByEmail(String email) {
-		Predicate<? super ContactUs> predicate = contactUs -> contactUs.getEmail().equalsIgnoreCase(email);
-		ContactUs contactUs = contactUsRepository.findContactUsByEmail(email).stream().filter(predicate).findFirst().get();
-		return contactUs;
+	public ContactUs findContactUsByEmailAddress(String emailAddress) {
+		Predicate<? super ContactUs> predicate = contactUs -> contactUs.getEmailAddress().equalsIgnoreCase(emailAddress);
+        return contactUsRepository.findContactUsByEmailAddress(emailAddress).stream().filter(predicate).findFirst().get();
 	}
 	
 	public ContactUs findContactUsByMobilePhoneNumber(String mobilePhoneNumber) {
 		Predicate<? super ContactUs> predicate = contactUs -> contactUs.getMobilePhoneNumber().equalsIgnoreCase(mobilePhoneNumber);
-		ContactUs contactUs = contactUsRepository.findContactUsByMobilePhoneNumber(mobilePhoneNumber).stream().filter(predicate).findFirst().get();
-		return contactUs;
+        return contactUsRepository.findContactUsByMobilePhoneNumber(mobilePhoneNumber).stream().filter(predicate).findFirst().get();
 	}
 	
 	public ContactUs addContactUs(ContactUs contactUs) {

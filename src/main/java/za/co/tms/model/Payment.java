@@ -3,8 +3,8 @@ package za.co.tms.model;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -30,7 +30,7 @@ public class Payment {
     @Schema(description = "Amount", example = "6000.00")
     private BigDecimal amount;
 
-    @FutureOrPresent
+    @PastOrPresent(message = "Payment date cannot be in the future")
     @Schema(description = "Payment date", example = "2026-11-01")
     private LocalDateTime paymentDate;
 

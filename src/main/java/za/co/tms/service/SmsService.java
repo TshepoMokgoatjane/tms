@@ -1,42 +1,57 @@
 package za.co.tms.service;
 
 import com.twilio.Twilio;
+import com.twilio.exception.TwilioException;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
+import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import za.co.tms.model.Tenant;
 
+@Slf4j
 @Service
 public class SmsService {
 
-    @Value("${twilio.account.sid")
+    @Value("${twilio.account.sid}")
     private String accountSid;
 
-    @Value("${twilio.auth.token")
+    @Value("${twilio.auth.token}")
     private String authToken;
 
-    @Value("${twilio.phone.number")
+    @Value("${twilio.phone.number}")
     private String fromNumber;
+
+    @PostConstruct
+    public void initTwilio() {
+        Twilio.init(accountSid, authToken);
+        log.info("Twilio client initialized successfully");
+    }
 
     public void sendRentReminderSms(Tenant tenant) {
         if (tenant.getCellPhoneNumber() == null || tenant.getCellPhoneNumber().isBlank()) {
-            return; // skip if no phone number
+            log.warn("Tenant {} {} has no phone number, skipping SMS", tenant.getName(), tenant.getSurname());
+            return;
         }
 
-        Twilio.init(accountSid, authToken);
+        try {
+            String messageBody = String.format("Hi %s %s, your rent is due today (%s). Room: %s. Thank you - TLTProperties",
+                    tenant.getTitle() != null ? tenant.getTitle().getDisplayName() : "",
+                    tenant.getSurname(),
+                    tenant.getPaymentDay().getLabel(),
+                    tenant.getRoomNumber().name()
+            );
 
-        String messageBody = String.format("Hi %s %s, your rent is due today (%s). Room: %s. Thank you - TLTProperties",
-                tenant.getTitle() != null ? tenant.getTitle().getDisplayName() : "",
-                tenant.getSurname(),
-                tenant.getPaymentDay().getLabel(),
-                tenant.getRoomNumber().name()
-        );
+            Message.creator(
+                    new PhoneNumber(tenant.getCellPhoneNumber()),
+                    new PhoneNumber(fromNumber),
+                    messageBody
+            ).create();
 
-        Message.creator(
-                new PhoneNumber(tenant.getCellPhoneNumber()),
-                new PhoneNumber(fromNumber),
-                messageBody
-        ).create();
+            log.info("SMS sent successfully to tenant {} {}", tenant.getName(), tenant.getSurname());
+        } catch (TwilioException e) {
+            log.error("Failed to send SMS to tenant {} {}: {}", tenant.getName(), tenant.getSurname(), e.getMessage());
+        }
     }
 }

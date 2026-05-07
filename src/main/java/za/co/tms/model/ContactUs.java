@@ -1,14 +1,18 @@
 package za.co.tms.model;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Column;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Convert;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.hibernate.type.YesNoConverter;
 
 @Data
 @NoArgsConstructor
@@ -24,11 +28,18 @@ public class ContactUs {
 	
 	private String firstName;
 	private String lastName;
-	private String email;
+	private String emailAddress;
 	private String mobilePhoneNumber;
+
+	@Enumerated(EnumType.STRING)
 	private ReferenceAd whereDidYouHearAboutUs;
+
 	private String message;
 	private String resolution;
-	private String acceptTermsAndConditions;
+
+	@Convert(converter = YesNoConverter.class)
+	@Column(name = "accept_terms_and_conditions", columnDefinition = "CHAR(1)")
+	private boolean acceptTermsAndConditions;
+
 	private String reCaptcha;
 }

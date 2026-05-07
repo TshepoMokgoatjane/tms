@@ -22,9 +22,9 @@ public class TmsApplication {
 		return new WebMvcConfigurer() {
 			public void addCorsMappings(CorsRegistry registry) {
 				registry.addMapping("/**")
-				.allowedMethods("*")
-				//.allowedOrigins("http://localhost:3000");
-                        .allowedOrigins("*");
+				.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+				.allowedHeaders("*")
+				.allowedOrigins("http://localhost:3000");
 			}
 		};
 	}

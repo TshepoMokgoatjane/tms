@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Validated
-@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/tenants")
 public class TenantController {

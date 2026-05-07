@@ -9,4 +9,5 @@ import java.util.List;
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     List<Payment> findByTenantId(Long tenantId);
     List<Payment> findByTenantIdAndPaymentDateBetween(Long tenantId, LocalDateTime start, LocalDateTime end);
+    boolean existsByTenantIdAndPaymentDateBetween(Long tenantId, LocalDateTime start, LocalDateTime end);
 }

@@ -55,10 +55,12 @@ public class Tenant extends AuditModel implements Serializable {
     @Schema(description = "Tenant's email address", example = "james.bond@testemail.com")
     private String email;
 
+    @Pattern(regexp = "^0\\d{9}$", message = "Phone number must be 10 digits starting with 0")
     @Size(max = 10)
     @Schema(description = "Primary cell phone number", example = "0821234567")
     private String cellPhoneNumber;
 
+    @Pattern(regexp = "^0\\d{9}$", message = "Phone number must be 10 digits starting with 0")
     @Size(max = 10)
     @Schema(description = "Alternative cell phone number", example = "0839876543")
     private String alternativeCellPhoneNumber;

@@ -1,9 +1,9 @@
 package za.co.tms.service;
 
 import java.util.List;
-import java.util.function.Predicate;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -14,8 +14,8 @@ import za.co.tms.repository.UserRepository;
 @Service
 public class UserService {
 
-	private UserRepository userRepository;
-	private PasswordEncoder passwordEncoder;
+	private final UserRepository userRepository;
+	private final PasswordEncoder passwordEncoder;
 	
 	@Autowired
 	public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
@@ -28,23 +28,35 @@ public class UserService {
 	}
 	
 	public User findUserByCellPhoneNumber(String cellPhoneNumber) {
-		Predicate<? super User> predicate = user -> user.getCellPhoneNumber() == cellPhoneNumber;
-      	return userRepository.findUserByCellPhoneNumber(cellPhoneNumber).stream().filter(predicate).findFirst().get();
+		return userRepository.findUserByCellPhoneNumber(cellPhoneNumber)
+				.stream()
+				.filter(user -> user.getCellPhoneNumber().equals(cellPhoneNumber))
+				.findFirst()
+				.orElseThrow(() -> new UsernameNotFoundException("User with phone number " + cellPhoneNumber + " not found"));
 	}
 	
 	public User findUserByEmail(String email) {
-		Predicate<? super User> predicate = user -> user.getEmail().equalsIgnoreCase(email);
-      	return userRepository.findUserByEmail(email).stream().filter(predicate).findFirst().get();
+		return userRepository.findUserByEmail(email)
+				.stream()
+				.filter(user -> user.getEmail().equalsIgnoreCase(email))
+				.findFirst()
+				.orElseThrow(() -> new UsernameNotFoundException("User with email " + email + " not found"));
 	}
 	
 	public User findUserByUsername(String username) {
-		Predicate<? super User> predicate  = user -> user.getUsername().equalsIgnoreCase(username);
-      	return userRepository.findUserByUsername(username).stream().filter(predicate).findFirst().get();
+		return userRepository.findUserByUsername(username)
+				.stream()
+				.filter(user -> user.getUsername().equalsIgnoreCase(username))
+				.findFirst()
+				.orElseThrow(() -> new UsernameNotFoundException("User with username " + username + " not found"));
 	}
 	
 	public User findUserById(int id) {
-		Predicate<? super User> predicate = user -> user.getId() == id;
-      	return userRepository.findUserById(id).stream().filter(predicate).findFirst().get();
+		return userRepository.findUserById(id)
+				.stream()
+				.filter(user -> user.getId() == id)
+				.findFirst()
+				.orElseThrow(() -> new UsernameNotFoundException("User with ID " + id + " not found"));
 	}
 	
 	public User addUser(User user) {
@@ -60,7 +72,12 @@ public class UserService {
 	}
 	
 	public void updateUser(User user) {
-		deleteUserById(user.getId());
-		userRepository.save(user);
+		User existingUser = findUserById(user.getId());
+		existingUser.setFirstName(user.getFirstName());
+		existingUser.setLastName(user.getLastName());
+		existingUser.setEmail(user.getEmail());
+		existingUser.setCellPhoneNumber(user.getCellPhoneNumber());
+		existingUser.setDateModified(java.time.LocalDateTime.now());
+		userRepository.save(existingUser);
 	}
 }

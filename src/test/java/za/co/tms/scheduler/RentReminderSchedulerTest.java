@@ -54,7 +54,7 @@ public class RentReminderSchedulerTest {
 
         when(tenantService.findAllTenants()).thenReturn(Collections.singletonList(tenant));
         when(tenantService.getTenantsWithRentDueToday(anyList())).thenReturn(Collections.singletonList(tenant));
-        when(paymentRepository.findByTenantIdAndPaymentDateBetween(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(List.of());
+        when(paymentRepository.existsByTenantIdAndPaymentDateBetween(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(false);
 
         rentReminderScheduler.checkRentDueToday();
 
@@ -65,18 +65,14 @@ public class RentReminderSchedulerTest {
     public void testPaymentNotCreatedWhenExists() {
         Tenant tenant = new Tenant();
         tenant.setId(1);
-        tenant.setSurname("John");
+        tenant.setName("John");
         tenant.setSurname("Doe");
         tenant.setRental(BigDecimal.valueOf(5000));
         tenant.setPaymentDay(PaymentDay.DAY_7); // Assuming today is the 8th
 
-        Payment existingPayment = new Payment();
-        existingPayment.setTenant(tenant);
-        existingPayment.setPaymentDate(LocalDateTime.now());
-
         when(tenantService.findAllTenants()).thenReturn(Collections.singletonList(tenant));
         when(tenantService.getTenantsWithRentDueToday(anyList())).thenReturn(Collections.singletonList(tenant));
-        when(paymentRepository.findByTenantIdAndPaymentDateBetween(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(List.of(existingPayment));
+        when(paymentRepository.existsByTenantIdAndPaymentDateBetween(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(true);
 
         rentReminderScheduler.checkRentDueToday();
 

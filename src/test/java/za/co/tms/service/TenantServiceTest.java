@@ -9,6 +9,7 @@ import za.co.tms.exception.TenantNotFoundException;
 import za.co.tms.model.Tenant;
 import za.co.tms.model.TenantStatus;
 import za.co.tms.repository.TenantRepository;
+import za.co.tms.validator.TenantValidator;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -24,6 +25,9 @@ public class TenantServiceTest {
 
     @Mock
     private TenantRepository tenantRepository;
+
+    @Mock
+    private TenantValidator tenantValidator;
 
     @InjectMocks
     private TenantService tenantService;

@@ -19,12 +19,12 @@ public class TenantService {
     private static final Logger LOGGER = LoggerFactory.getLogger(TenantService.class);
 	
 	private final TenantRepository tenantRepository;
-
-    TenantValidator tenantValidator = new TenantValidator();
+    private final TenantValidator tenantValidator;
 	
 	@Autowired
-	public TenantService(TenantRepository tenantRepository) {
+	public TenantService(TenantRepository tenantRepository, TenantValidator tenantValidator) {
 		this.tenantRepository = tenantRepository;
+        this.tenantValidator = tenantValidator;
 	}
 			
 	public List<Tenant> findAllTenants() {
