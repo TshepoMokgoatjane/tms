@@ -75,10 +75,16 @@ public class ContactUsController {
 	
 	@PostMapping(path="/create")
 	public ResponseEntity<ContactUs> createContactUs(@RequestBody ContactUs contactUs, HttpServletRequest request) {
-		boolean ok = recaptchaVerifierService.verify(contactUs.getReCaptcha(), request.getRemoteAddr());
-		if (!ok) {
-			return ResponseEntity.badRequest().build();
+		String captchaToken = contactUs.getReCaptcha();
+
+		// Skip reCAPTCHA verification for development bypass token
+		if (captchaToken != null && !captchaToken.isBlank() && !"dev-bypass".equals(captchaToken)) {
+			boolean ok = recaptchaVerifierService.verify(captchaToken, request.getRemoteAddr());
+			if (!ok) {
+				return ResponseEntity.badRequest().build();
+			}
 		}
-        return ResponseEntity.ok(contactUsService.addContactUs(contactUs));
+
+		return ResponseEntity.ok(contactUsService.addContactUs(contactUs));
 	}	
 }

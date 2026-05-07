@@ -41,6 +41,12 @@ public class JwtSecurityConfig {
         .csrf(csrf -> csrf.disable()) // Disable CSRF for stateless APIs
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/auth/welcome", "/auth/addNewUser", "/auth/generateToken").permitAll()
+            .requestMatchers("/contact-us/**").permitAll()
+            .requestMatchers("/tenants/**").permitAll()
+            .requestMatchers("/api/payments/**").permitAll()
+            .requestMatchers("/faqs/**").permitAll()
+            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+            .requestMatchers("/actuator/**").permitAll()
             .requestMatchers("/auth/user/**").hasAuthority("ROLE_USER")
             .requestMatchers("/auth/admin/**").hasAuthority("ROLE_ADMIN")
             .anyRequest().authenticated() // Protect all other endpoints
