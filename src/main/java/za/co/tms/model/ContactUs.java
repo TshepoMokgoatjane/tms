@@ -41,5 +41,6 @@ public class ContactUs {
 	@Column(name = "accept_terms_and_conditions", columnDefinition = "CHAR(1)")
 	private boolean acceptTermsAndConditions;
 
+	@jakarta.persistence.Transient
 	private String reCaptcha;
 }
