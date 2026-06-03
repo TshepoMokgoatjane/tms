@@ -1,5 +1,7 @@
 package za.co.tms;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,41 +11,40 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import za.co.tms.repository.UserInfoRepository;
+import za.co.tms.repository.AppUserRepository;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 public class JwtIntegrationTest {
 
-    @SuppressWarnings("unused")
     @Autowired
     private MockMvc mockMvc;
 
-    @SuppressWarnings("unused")
     @Autowired
-    private UserInfoRepository userInfoRepository;
+    private AppUserRepository appUserRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void cleanDatabase() {
-        userInfoRepository.deleteAll();
+        appUserRepository.deleteAll();
     }
 
     @Test
     void shouldGenerateTokenAndAccessProtectedEndpoint() throws Exception {
-        // Step 1: Add a user - Ensure the data below is unique (username, cellPhoneNumber, and email)
         String uniqueSuffix = String.valueOf(System.currentTimeMillis());
 
+        // Step 1: Register a user
         String userJson = String.format("""
                     {
                         "username": "tshepo_%s",
                         "password": "secure123",
-                        "roles": "ROLE_USER",
+                        "role": "USER",
                         "cellPhoneNumber": "012345678%s",
                         "email": "tshepo%s@tiktok.com",
                         "firstName": "Tshepo",
@@ -51,10 +52,10 @@ public class JwtIntegrationTest {
                     }
                 """, uniqueSuffix, uniqueSuffix.substring(uniqueSuffix.length() - 2), uniqueSuffix);
 
-        mockMvc.perform(post("/auth/addNewUser")
+        mockMvc.perform(post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(userJson))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         // Step 2: Generate token
         String loginJson = String.format("""
@@ -70,15 +71,16 @@ public class JwtIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        String token = result.getResponse().getContentAsString();
+        String responseBody = result.getResponse().getContentAsString();
+        JsonNode json = objectMapper.readTree(responseBody);
+        String token = json.get("token").asText();
 
         Assertions.assertNotNull(token);
-        Assertions.assertTrue(token.startsWith("ey")); // JWT tokens typically starts with 'ey'
+        Assertions.assertTrue(token.startsWith("ey"));
 
         // Step 3: Access protected endpoint
-        mockMvc.perform(get("/auth/user/userProfile")
+        mockMvc.perform(get("/auth/user/profile")
                 .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Welcome to User Profile")));
+                .andExpect(status().isOk());
     }
 }

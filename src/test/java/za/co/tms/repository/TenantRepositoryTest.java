@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
-@EntityScan(basePackages = "za.co.tms.model")
+@EntityScan(basePackages = "za.co.tms.domain")
 @ActiveProfiles("test")
 public class TenantRepositoryTest {
 
