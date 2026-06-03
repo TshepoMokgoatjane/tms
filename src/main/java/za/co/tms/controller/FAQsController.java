@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import za.co.tms.model.FAQs;
+import za.co.tms.domain.FAQs;
 import za.co.tms.service.FAQsService;
 
 @RestController

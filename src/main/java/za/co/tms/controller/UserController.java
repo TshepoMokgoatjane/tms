@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import za.co.tms.jwt.JwtTokenRequest;
 import za.co.tms.jwt.JwtTokenService;
-import za.co.tms.model.UserInfo;
+import za.co.tms.domain.UserInfo;
 import za.co.tms.service.UserInfoService;
 
 @RestController

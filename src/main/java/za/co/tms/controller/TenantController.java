@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import za.co.tms.dto.TenantResponseDTO;
-import za.co.tms.model.Tenant;
+import za.co.tms.domain.Tenant;
 import za.co.tms.service.TenantService;
 
 import java.util.List;

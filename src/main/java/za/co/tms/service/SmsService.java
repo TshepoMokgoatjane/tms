@@ -8,7 +8,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import za.co.tms.model.Tenant;
+import za.co.tms.domain.Tenant;
 
 @Slf4j
 @Service

@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import za.co.tms.model.Role;
+import za.co.tms.domain.Role;
 
 public interface RoleRepository extends JpaRepository<Role, Integer> {
 	

@@ -10,7 +10,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import za.co.tms.model.*;
+import za.co.tms.domain.*;
 import za.co.tms.repository.PaymentRepository;
 import za.co.tms.repository.TenantRepository;
 

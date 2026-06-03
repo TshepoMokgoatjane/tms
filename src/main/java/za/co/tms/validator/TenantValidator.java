@@ -2,7 +2,7 @@ package za.co.tms.validator;
 
 import org.springframework.stereotype.Component;
 import za.co.tms.exception.InvalidLeasePeriodException;
-import za.co.tms.model.Tenant;
+import za.co.tms.domain.Tenant;
 
 @Component
 public class TenantValidator {

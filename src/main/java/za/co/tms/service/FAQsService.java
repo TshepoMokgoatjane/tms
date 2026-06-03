@@ -6,7 +6,7 @@ import java.util.function.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import za.co.tms.model.FAQs;
+import za.co.tms.domain.FAQs;
 import za.co.tms.repository.FAQsRepository;
 
 @Service

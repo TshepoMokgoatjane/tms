@@ -6,8 +6,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import za.co.tms.exception.TenantNotFoundException;
-import za.co.tms.model.Tenant;
-import za.co.tms.model.TenantStatus;
+import za.co.tms.domain.Tenant;
+import za.co.tms.domain.TenantStatus;
 import za.co.tms.repository.TenantRepository;
 import za.co.tms.validator.TenantValidator;
 

@@ -6,11 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
-import za.co.tms.model.PaymentDay;
-import za.co.tms.model.Room;
-import za.co.tms.model.Tenant;
-import za.co.tms.model.TenantBehaviour;
-import za.co.tms.model.TenantStatus;
+import za.co.tms.domain.PaymentDay;
+import za.co.tms.domain.Room;
+import za.co.tms.domain.Tenant;
+import za.co.tms.domain.TenantBehaviour;
+import za.co.tms.domain.TenantStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

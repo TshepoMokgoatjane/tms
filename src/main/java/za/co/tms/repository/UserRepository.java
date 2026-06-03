@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import za.co.tms.model.User;
+import za.co.tms.domain.User;
 
 public interface UserRepository extends JpaRepository<User, Integer> {
 

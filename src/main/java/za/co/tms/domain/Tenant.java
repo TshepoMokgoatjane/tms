@@ -1,4 +1,4 @@
-package za.co.tms.model;
+package za.co.tms.domain;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;

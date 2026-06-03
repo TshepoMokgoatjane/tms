@@ -10,7 +10,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import za.co.tms.model.ErrorResponse;
+import za.co.tms.domain.ErrorResponse;
 
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;

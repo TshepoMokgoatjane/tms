@@ -4,9 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import za.co.tms.model.PaymentDay;
-import za.co.tms.model.Room;
-import za.co.tms.model.Tenant;
+import za.co.tms.domain.PaymentDay;
+import za.co.tms.domain.Room;
+import za.co.tms.domain.Tenant;
 
 import java.math.BigDecimal;
 

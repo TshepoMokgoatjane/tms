@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import za.co.tms.model.ContactUs;
+import za.co.tms.domain.ContactUs;
 
 public interface ContactUsRepository extends JpaRepository<ContactUs, Integer> {
 	

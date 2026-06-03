@@ -7,8 +7,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import za.co.tms.model.Status;
-import za.co.tms.model.User;
+import za.co.tms.domain.Status;
+import za.co.tms.domain.User;
 import za.co.tms.repository.UserRepository;
 
 @Service

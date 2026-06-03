@@ -1,7 +1,7 @@
 package za.co.tms.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import za.co.tms.model.Payment;
+import za.co.tms.domain.Payment;
 
 import java.time.LocalDateTime;
 import java.util.List;

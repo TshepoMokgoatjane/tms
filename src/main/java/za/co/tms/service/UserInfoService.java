@@ -10,9 +10,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import za.co.tms.model.Status;
-import za.co.tms.model.UserInfo;
-import za.co.tms.model.UserInfoDetails;
+import za.co.tms.domain.Status;
+import za.co.tms.domain.UserInfo;
+import za.co.tms.domain.UserInfoDetails;
 import za.co.tms.repository.UserInfoRepository;
 
 @Service

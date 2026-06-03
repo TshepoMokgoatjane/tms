@@ -12,11 +12,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import za.co.tms.config.NoSecurityConfig;
 import za.co.tms.exception.TenantNotFoundException;
-import za.co.tms.model.PaymentDay;
-import za.co.tms.model.Room;
-import za.co.tms.model.Tenant;
-import za.co.tms.model.TenantBehaviour;
-import za.co.tms.model.TenantStatus;
+import za.co.tms.domain.PaymentDay;
+import za.co.tms.domain.Room;
+import za.co.tms.domain.Tenant;
+import za.co.tms.domain.TenantBehaviour;
+import za.co.tms.domain.TenantStatus;
 import za.co.tms.service.TenantService;
 
 import java.math.BigDecimal;

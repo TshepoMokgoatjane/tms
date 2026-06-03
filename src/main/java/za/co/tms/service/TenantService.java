@@ -5,8 +5,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import za.co.tms.exception.TenantNotFoundException;
-import za.co.tms.model.Tenant;
-import za.co.tms.model.TenantStatus;
+import za.co.tms.domain.Tenant;
+import za.co.tms.domain.TenantStatus;
 import za.co.tms.repository.TenantRepository;
 import za.co.tms.validator.TenantValidator;
 

@@ -1,4 +1,4 @@
-package za.co.tms.model;
+package za.co.tms.domain;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

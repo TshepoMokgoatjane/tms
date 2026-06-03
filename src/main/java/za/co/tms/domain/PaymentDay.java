@@ -1,4 +1,4 @@
-package za.co.tms.model;
+package za.co.tms.domain;
 
 import java.time.LocalDate;
 

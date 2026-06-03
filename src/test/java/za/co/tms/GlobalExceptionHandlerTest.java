@@ -14,7 +14,7 @@ import za.co.tms.config.NoSecurityConfig;
 import za.co.tms.exception.InvalidLeasePeriodException;
 import za.co.tms.exception.TenantNotFoundException;
 import za.co.tms.jwt.JwtTokenService;
-import za.co.tms.model.Tenant;
+import za.co.tms.domain.Tenant;
 import za.co.tms.service.TenantService;
 
 import java.time.LocalDate;
