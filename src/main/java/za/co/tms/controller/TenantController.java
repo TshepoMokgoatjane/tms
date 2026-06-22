@@ -7,11 +7,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import za.co.tms.domain.Title;
 import za.co.tms.dto.TenantResponseDTO;
 import za.co.tms.domain.Tenant;
 import za.co.tms.service.TenantService;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Validated
@@ -76,4 +79,12 @@ public class TenantController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(response);
     }
+
+	@GetMapping("/titles")
+	public ResponseEntity<List<Map<String, String>>> getTenantTitles() {
+		List<Map<String, String>> titles = Arrays.stream(Title.values())
+				.map(t -> Map.of("name", t.name(), "displayName", t.getDisplayName()))
+				.toList();
+		return ResponseEntity.ok(titles);
+	}
 }
