@@ -5,8 +5,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import za.co.tms.exception.TenantNotFoundException;
+import za.co.tms.domain.Room;
 import za.co.tms.domain.Tenant;
 import za.co.tms.domain.TenantStatus;
+import za.co.tms.repository.RoomRepository;
 import za.co.tms.repository.TenantRepository;
 import za.co.tms.validator.TenantValidator;
 
@@ -20,11 +22,13 @@ public class TenantService {
 	
 	private final TenantRepository tenantRepository;
     private final TenantValidator tenantValidator;
+    private final RoomRepository roomRepository;
 	
 	@Autowired
-	public TenantService(TenantRepository tenantRepository, TenantValidator tenantValidator) {
+	public TenantService(TenantRepository tenantRepository, TenantValidator tenantValidator, RoomRepository roomRepository) {
 		this.tenantRepository = tenantRepository;
         this.tenantValidator = tenantValidator;
+        this.roomRepository = roomRepository;
 	}
 			
 	public List<Tenant> findAllTenants() {
@@ -54,6 +58,14 @@ public class TenantService {
         tenantValidator.validateLeaseDates(tenant);
 
         tenant.setId(null); // Ensure it's a new tenant
+
+        // Mark the assigned room as occupied
+        if (tenant.getRoom() != null) {
+            Room room = roomRepository.findById(tenant.getRoom().getId())
+                    .orElseThrow(() -> new RuntimeException("Room not found"));
+            room.setOccupied(true);
+            roomRepository.save(room);
+        }
 		
 		return tenantRepository.save(tenant);
 	}
@@ -64,6 +76,14 @@ public class TenantService {
 
         Tenant tenant = findTenantById(id); // will throw if not found
         tenant.setTenantStatus(TenantStatus.INACTIVE);
+
+        // Free up the room when tenant is deactivated
+        if (tenant.getRoom() != null) {
+            Room room = tenant.getRoom();
+            room.setOccupied(false);
+            roomRepository.save(room);
+        }
+
         tenantRepository.save(tenant);
 	}
 
@@ -72,6 +92,22 @@ public class TenantService {
         LOGGER.info("Updating tenant with ID {}", id);
 
         Tenant existingTenant = findTenantById(id); // will throw if not found
+
+        // Handle room change: free old room, occupy new room
+        Room oldRoom = existingTenant.getRoom();
+        Room newRoom = updatedTenant.getRoom();
+
+        if (oldRoom != null && (newRoom == null || !oldRoom.getId().equals(newRoom.getId()))) {
+            oldRoom.setOccupied(false);
+            roomRepository.save(oldRoom);
+        }
+
+        if (newRoom != null && (oldRoom == null || !newRoom.getId().equals(oldRoom.getId()))) {
+            Room roomToOccupy = roomRepository.findById(newRoom.getId())
+                    .orElseThrow(() -> new RuntimeException("Room not found"));
+            roomToOccupy.setOccupied(true);
+            roomRepository.save(roomToOccupy);
+        }
 
         // Merge only the fields that are allowed to be updated
         existingTenant.setName(updatedTenant.getName());
