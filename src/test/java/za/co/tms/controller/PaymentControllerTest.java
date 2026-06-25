@@ -110,12 +110,20 @@ public class PaymentControllerTest {
 
     private Tenant createTenant() {
 
+        Room room = new Room();
+        room.setId(1L);
+        room.setCode("A11");
+        room.setDescription("Unit A11");
+        room.setRentalAmount(BigDecimal.valueOf(5000));
+        room.setPrepaidElectricityMeterNumber("MTR-001");
+        room.setOccupied(false);
+
         Tenant tenant = new Tenant();
         tenant.setName(TENANT_NAME);
         tenant.setSurname(TENANT_SURNAME);
         tenant.setCellPhoneNumber(CELLPHONE_NUMBER);
         tenant.setAlternativeCellPhoneNumber(ALTERNATIVE_CELLPHONE_NUMBER);
-        tenant.setRoomNumber(Room.A11);
+        tenant.setRoom(room);
         tenant.setNumberOfTenantsInUnit(NUMBER_OF_TENANTS_IN_UNIT);
         tenant.setPaymentDay(PaymentDay.DAY_1);
         tenant.setEmail(TENANT_EMAIL);

@@ -56,7 +56,7 @@ public class RentReminderScheduler {
                 log.info("Tenant: {} {}, Room: {}, Rent: {}, Payment Day: {}",
                         tenant.getTitle() + " " + tenant.getName(),
                         tenant.getSurname(),
-                        tenant.getRoomNumber(),
+                        tenant.getRoom() != null ? tenant.getRoom().getRoomNumber() : "N/A",
                         tenant.getRental(),
                         tenant.getPaymentDay().getLabel()
                 )

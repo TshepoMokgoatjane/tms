@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import za.co.tms.domain.Room;
 import za.co.tms.domain.Title;
 import za.co.tms.dto.TenantResponseDTO;
 import za.co.tms.domain.Tenant;

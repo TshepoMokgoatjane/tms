@@ -40,7 +40,7 @@ public class SmsService {
                     tenant.getTitle() != null ? tenant.getTitle().getDisplayName() : "",
                     tenant.getSurname(),
                     tenant.getPaymentDay().getLabel(),
-                    tenant.getRoomNumber().name()
+                    tenant.getRoom() != null ? tenant.getRoom().getCode() : "N/A"
             );
 
             Message.creator(

@@ -1,5 +1,6 @@
 package za.co.tms.repository;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,9 +32,24 @@ public class TenantRepositoryTest {
     private static final String ALTERNATIVE_CELLPHONE_NUMBER = "0987654321";
     private static final int NUMBER_OF_TENANTS_IN_UNIT = 1;
 
-
     @Autowired
     private TenantRepository tenantRepository;
+
+    @Autowired
+    private RoomRepository roomRepository;
+
+    private Room testRoom;
+
+    @BeforeEach
+    void setUp() {
+        testRoom = new Room();
+        testRoom.setCode("A11");
+        testRoom.setDescription("Unit A11");
+        testRoom.setRentalAmount(BigDecimal.valueOf(5000));
+        testRoom.setPrepaidElectricityMeterNumber("MTR-001");
+        testRoom.setOccupied(false);
+        testRoom = roomRepository.save(testRoom);
+    }
 
     @Test
     @DisplayName("Should find tenant by name ignoring case")
@@ -45,7 +61,7 @@ public class TenantRepositoryTest {
         tenant.setSurname(TENANT_SURNAME);
         tenant.setCellPhoneNumber(CELLPHONE_NUMBER);
         tenant.setAlternativeCellPhoneNumber(ALTERNATIVE_CELLPHONE_NUMBER);
-        tenant.setRoomNumber(Room.A11);
+        tenant.setRoom(testRoom);
         tenant.setNumberOfTenantsInUnit(NUMBER_OF_TENANTS_IN_UNIT);
         tenant.setPaymentDay(PaymentDay.DAY_1);
         tenant.setEmail(TENANT_EMAIL);

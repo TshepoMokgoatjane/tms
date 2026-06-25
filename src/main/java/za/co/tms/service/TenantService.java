@@ -80,7 +80,7 @@ public class TenantService {
         existingTenant.setEmail(updatedTenant.getEmail());
         existingTenant.setCellPhoneNumber(updatedTenant.getCellPhoneNumber());
         existingTenant.setAlternativeCellPhoneNumber(updatedTenant.getAlternativeCellPhoneNumber());
-        existingTenant.setRoomNumber(updatedTenant.getRoomNumber());
+        existingTenant.setRoom(updatedTenant.getRoom());
         existingTenant.setLeaseStartDate(updatedTenant.getLeaseStartDate());
         existingTenant.setLeaseEndDate(updatedTenant.getLeaseEndDate());
         existingTenant.setNumberOfTenantsInUnit(updatedTenant.getNumberOfTenantsInUnit());

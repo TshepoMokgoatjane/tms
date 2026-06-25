@@ -47,10 +47,10 @@ public class TenantResponseDTO {
         this.cellPhoneNumber = tenant.getCellPhoneNumber();
         this.alternativeCellPhoneNumber = tenant.getAlternativeCellPhoneNumber();
 
-        Room room = tenant.getRoomNumber();
-        this.roomCode = room != null ? room.name() : null;
-        this.roomDescription = room != null ? room.getRoomDescription() : null;
-        this.meterNumber = room != null ? room.getMeterNumber() : null;
+        Room room = tenant.getRoom();
+        this.roomCode = room != null ? room.getCode() : null;
+        this.roomDescription = room != null ? room.getDescription() : null;
+        this.meterNumber = room != null ? room.getPrepaidElectricityMeterNumber() : null;
 
         this.numberOfTenantsInUnit = tenant.getNumberOfTenantsInUnit();
         this.leaseStartDate = tenant.getLeaseStartDate() != null ? tenant.getLeaseStartDate().toString() : null;

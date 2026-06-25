@@ -33,9 +33,9 @@ public class EmailService {
                     tenant.getTitle() != null ? tenant.getTitle().getDisplayName() : "",
                     tenant.getSurname(),
                     tenant.getPaymentDay().getLabel(),
-                    tenant.getRoomNumber().name(),
-                    tenant.getRoomNumber().getRoomDescription(),
-                    tenant.getRoomNumber().getMeterNumber()
+                    tenant.getRoom() != null ? tenant.getRoom().getCode() : "N/A",
+                    tenant.getRoom() != null ? tenant.getRoom().getDescription() : "N/A",
+                    tenant.getRoom() != null ? tenant.getRoom().getPrepaidElectricityMeterNumber() : "N/A"
             ));
 
             mailSender.send(message);

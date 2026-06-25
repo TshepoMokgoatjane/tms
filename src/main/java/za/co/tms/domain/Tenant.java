@@ -1,14 +1,8 @@
 package za.co.tms.domain;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Column;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import lombok.*;
 
 import java.io.Serial;
@@ -65,11 +59,10 @@ public class Tenant extends AuditModel implements Serializable {
     @Schema(description = "Alternative cell phone number", example = "0839876543")
     private String alternativeCellPhoneNumber;
 
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(name = "room_number")
-    @Schema(description = "Room assigned to the tenant", example = "A1")
-    private Room roomNumber;
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "room_id", referencedColumnName = "id", unique = true)
+    @Schema(description = "Room assigned to the tenant")
+    private Room room;
 
     @Min(1)
     @Schema(description = "Number of tenants in the unit", example = "2")

@@ -1,42 +1,51 @@
 package za.co.tms.domain;
 
-import lombok.Getter;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-public enum Room {
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
-	A1 ("One Bedroom Apartment", "Meter Mate - 07142460315"),
-	A2 ("Two Bedroom Apartment", "Meter Mate - 07139265537"),
-	A3 ("One Bedroom Apartment", "Meter Mate - 07137656497"),
-	A4 ("One Bedroom Apartment", "CitiQ - 07162631308"),
-	A5 ("One Bedroom Apartment", "CitiQ - 07131811031"),
-	A6 ("One Bedroom Apartment", "CitiQ - 07131810959"),
-	A7 ("One Bedroom Apartment", "Meter Mate - 07125412432"),
-	A8 ("One Bedroom Apartment", "Meter Mate - 07164984812"),
-	A9 ("One Bedroom Apartment", "CitiQ - 07131811023"),
-	A10 ("One Bedroom Apartment", "CitiQ - 07131811049"),
-	A11 ("Two Bedroom Apartment", "Meter Mate - 07164984853"),
-	B1 ("Two Bedroom Apartment", "Meter Mate - 07164984838"),
-	B2 ("Two Bedroom Apartment", "Meter Mate - 07139265529"),
-	C1 ("Bachelor Room", "Meter Mate - 07164984820"),
-    ERF490 ("Two Bedroom House", "Eskom - 45006087326");
-	
-	@Getter
-    private final String roomDescription;
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Entity(name = "room")
+public class Room {
 
-    @Getter
-    private final String meterNumber;
-	
-	Room(String roomDescription, String meterNumber) {
-        this.roomDescription = roomDescription;
-        this.meterNumber = meterNumber;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+
+	@Column(unique = true, nullable = false)
+	private String code;
+
+	private String description;
+
+	private BigDecimal rentalAmount;
+
+	private String prepaidElectricityMeterNumber;
+
+	private boolean occupied;
+
+	private LocalDate createdAt;
+	private LocalDateTime updatedAt;
+
+	// The toString matches what the frontend displays
+	public String getRoomNumber() {
+		return code + " - " + description;
 	}
 
-    public static void main(String[] args) {
-		System.out.println("Show me A11 Room: " + A11.roomDescription + " and its meter number: " + A11.meterNumber);
+	@PrePersist
+	public void prePersist() {
+		this.createdAt = LocalDate.now();
+		this.updatedAt = LocalDateTime.now();
 	}
 
-    @Override
-    public String toString() {
-        return name() + " - " + roomDescription;
-    }
+	@PreUpdate
+	public void preUpdate() {
+		this.updatedAt = LocalDateTime.now();
+	}
 }
