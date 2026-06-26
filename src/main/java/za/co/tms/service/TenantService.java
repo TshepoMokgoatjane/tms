@@ -97,16 +97,26 @@ public class TenantService {
         Room oldRoom = existingTenant.getRoom();
         Room newRoom = updatedTenant.getRoom();
 
-        if (oldRoom != null && (newRoom == null || !oldRoom.getId().equals(newRoom.getId()))) {
+        boolean becomingInactive = updatedTenant.getTenantStatus() == TenantStatus.INACTIVE
+                && existingTenant.getTenantStatus() != TenantStatus.INACTIVE;
+
+        // If tenant is being deactivated, free their room
+        if (becomingInactive && oldRoom != null) {
             oldRoom.setOccupied(false);
             roomRepository.save(oldRoom);
-        }
+        } else {
+            // Normal room swap logic
+            if (oldRoom != null && (newRoom == null || !oldRoom.getId().equals(newRoom.getId()))) {
+                oldRoom.setOccupied(false);
+                roomRepository.save(oldRoom);
+            }
 
-        if (newRoom != null && (oldRoom == null || !newRoom.getId().equals(oldRoom.getId()))) {
-            Room roomToOccupy = roomRepository.findById(newRoom.getId())
-                    .orElseThrow(() -> new RuntimeException("Room not found"));
-            roomToOccupy.setOccupied(true);
-            roomRepository.save(roomToOccupy);
+            if (newRoom != null && (oldRoom == null || !newRoom.getId().equals(oldRoom.getId()))) {
+                Room roomToOccupy = roomRepository.findById(newRoom.getId())
+                        .orElseThrow(() -> new RuntimeException("Room not found"));
+                roomToOccupy.setOccupied(true);
+                roomRepository.save(roomToOccupy);
+            }
         }
 
         // Merge only the fields that are allowed to be updated
