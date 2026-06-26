@@ -28,7 +28,7 @@ public class RoomController {
         return ResponseEntity.ok(roomService.findAll());
     }
 
-    @GetMapping("/find/by-id/{id}")
+    @GetMapping("/find/by/{id}")
     @Operation(summary = "Get room by ID", description = "Returns a room by its unique identifier")
     public ResponseEntity<Room> getRoomById(@PathVariable Long id) {
         return ResponseEntity.ok(roomService.findById(id));
