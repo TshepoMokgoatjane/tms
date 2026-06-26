@@ -57,7 +57,7 @@ public class RentReminderScheduler {
                         tenant.getTitle() + " " + tenant.getName(),
                         tenant.getSurname(),
                         tenant.getRoom() != null ? tenant.getRoom().getRoomNumber() : "N/A",
-                        tenant.getRental(),
+                        tenant.getRentalAmount(),
                         tenant.getPaymentDay().getLabel()
                 )
         );
@@ -85,7 +85,7 @@ public class RentReminderScheduler {
             // Create a PENDING payment record
             Payment payment = new Payment();
             payment.setTenant(tenant);
-            payment.setAmount(tenant.getRental() != null ? tenant.getRental() : BigDecimal.ZERO);
+            payment.setAmount(tenant.getRentalAmount() != null ? tenant.getRentalAmount() : BigDecimal.ZERO);
             payment.setPaymentDate(LocalDateTime.now());
             payment.setPaymentMethod(PaymentMethod.EFT);
             payment.setPaymentStatus(PaymentStatus.PENDING);

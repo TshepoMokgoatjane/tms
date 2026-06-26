@@ -82,7 +82,7 @@ public class Tenant extends AuditModel implements Serializable {
     @Column(precision = 10, scale = 2)
     @DecimalMin(value = "0.0", inclusive = true, message = "Rental must be zero or positive")
     @Schema(description = "Monthly rental amount", example = "6000.00")
-    private BigDecimal rental;
+    private BigDecimal rentalAmount;
 
     @NotNull
     @Enumerated(EnumType.STRING)

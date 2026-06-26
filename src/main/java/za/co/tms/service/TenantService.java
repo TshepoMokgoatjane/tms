@@ -122,7 +122,7 @@ public class TenantService {
         existingTenant.setNumberOfTenantsInUnit(updatedTenant.getNumberOfTenantsInUnit());
         existingTenant.setPaymentDay(updatedTenant.getPaymentDay());
         existingTenant.setDepositPaid(updatedTenant.isDepositPaid());
-        existingTenant.setRental(updatedTenant.getRental());
+        existingTenant.setRentalAmount(updatedTenant.getRentalAmount());
         existingTenant.setTenantBehaviour(updatedTenant.getTenantBehaviour());
         existingTenant.setTenantStatus(updatedTenant.getTenantStatus());
 

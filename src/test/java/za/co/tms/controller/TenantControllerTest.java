@@ -107,7 +107,7 @@ public class TenantControllerTest {
         tenant.setTenantStatus(TenantStatus.ACTIVE);
         tenant.setLeaseStartDate(LocalDate.now());
         tenant.setLeaseEndDate(LocalDate.now().plusDays(30));
-        tenant.setRental(BigDecimal.valueOf(5000));
+        tenant.setRentalAmount(BigDecimal.valueOf(5000));
         tenant.setTenantBehaviour(TenantBehaviour.GOOD);
 
         // When
@@ -128,7 +128,7 @@ public class TenantControllerTest {
         tenant.setTenantStatus(TenantStatus.ACTIVE);
         tenant.setLeaseStartDate(LocalDate.now());
         tenant.setLeaseEndDate(LocalDate.now().plusDays(30));
-        tenant.setRental(BigDecimal.valueOf(5000));
+        tenant.setRentalAmount(BigDecimal.valueOf(5000));
 
         mockMvc.perform(post(CREATE)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -146,7 +146,7 @@ public class TenantControllerTest {
         tenant.setTenantStatus(TenantStatus.ACTIVE);
         tenant.setLeaseStartDate(LocalDate.now());
         tenant.setLeaseEndDate(LocalDate.now().plusDays(30));
-        tenant.setRental(BigDecimal.valueOf(5000));
+        tenant.setRentalAmount(BigDecimal.valueOf(5000));
 
         mockMvc.perform(post(CREATE)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -163,7 +163,7 @@ public class TenantControllerTest {
         tenant.setTenantStatus(TenantStatus.ACTIVE);
         tenant.setLeaseStartDate(LocalDate.now());
         tenant.setLeaseEndDate(LocalDate.now().minusDays(1)); // Invalid
-        tenant.setRental(BigDecimal.valueOf(5000));
+        tenant.setRentalAmount(BigDecimal.valueOf(5000));
 
         mockMvc.perform(post(CREATE)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -180,7 +180,7 @@ public class TenantControllerTest {
         tenant.setTenantStatus(TenantStatus.ACTIVE);
         tenant.setLeaseStartDate(LocalDate.now());
         tenant.setLeaseEndDate(LocalDate.now().plusDays(30));
-        tenant.setRental(BigDecimal.valueOf(-1000));    // Invalid rental
+        tenant.setRentalAmount(BigDecimal.valueOf(-1000));    // Invalid rental
 
         mockMvc.perform(post(CREATE)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -218,7 +218,7 @@ public class TenantControllerTest {
         updateTenant.setTenantStatus(TenantStatus.ACTIVE);
         updateTenant.setLeaseStartDate(LocalDate.now());
         updateTenant.setLeaseEndDate(LocalDate.now().plusDays(30));
-        updateTenant.setRental(BigDecimal.valueOf(6000));
+        updateTenant.setRentalAmount(BigDecimal.valueOf(6000));
 
         // When
         when(tenantService.updateTenant(Mockito.eq(tenantId), any(Tenant.class)))

@@ -68,7 +68,7 @@ public class TenantRepositoryTest {
         tenant.setTenantStatus(TenantStatus.ACTIVE);
         tenant.setLeaseStartDate(LocalDate.now());
         tenant.setLeaseEndDate(LocalDate.now().plusDays(30));
-        tenant.setRental(BigDecimal.valueOf(5000));
+        tenant.setRentalAmount(BigDecimal.valueOf(5000));
         tenant.setTenantBehaviour(TenantBehaviour.GOOD);
 
         tenantRepository.save(tenant);

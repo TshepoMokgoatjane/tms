@@ -118,7 +118,7 @@ public class TenantServiceTest {
         updatedTenant.setName("New Name");
         updatedTenant.setSurname("Tenant");
         updatedTenant.setTenantStatus(TenantStatus.ACTIVE);
-        updatedTenant.setRental(BigDecimal.valueOf(6000));
+        updatedTenant.setRentalAmount(BigDecimal.valueOf(6000));
 
         when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(exisitngTenant));
 
@@ -129,7 +129,7 @@ public class TenantServiceTest {
 
         // Assert
         assertEquals("New Name", result.getName());
-        assertEquals(BigDecimal.valueOf(6000), result.getRental());
+        assertEquals(BigDecimal.valueOf(6000), result.getRentalAmount());
         verify(tenantRepository).findById(tenantId);
         verify(tenantRepository).save(exisitngTenant);
     }

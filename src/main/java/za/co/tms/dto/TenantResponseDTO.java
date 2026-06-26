@@ -32,7 +32,7 @@ public class TenantResponseDTO {
     private String leaseStartDate;
     private String leaseEndDate;
     private boolean depositPaid;
-    private BigDecimal rental;
+    private BigDecimal rentalAmount;
 
     private String paymentDayLabel;
     private String tenantBehaviour;
@@ -56,7 +56,7 @@ public class TenantResponseDTO {
         this.leaseStartDate = tenant.getLeaseStartDate() != null ? tenant.getLeaseStartDate().toString() : null;
         this.leaseEndDate = tenant.getLeaseEndDate() != null ? tenant.getLeaseEndDate().toString() : null;
         this.depositPaid = tenant.isDepositPaid();
-        this.rental = tenant.getRental();
+        this.rentalAmount = tenant.getRentalAmount();
 
         PaymentDay paymentDay = tenant.getPaymentDay();
         this.paymentDayLabel = paymentDay != null ? paymentDay.getLabel() : null;

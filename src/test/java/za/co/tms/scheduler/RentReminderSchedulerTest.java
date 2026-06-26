@@ -48,7 +48,7 @@ public class RentReminderSchedulerTest {
         tenant.setId(1);
         tenant.setName("John");
         tenant.setSurname("Doe");
-        tenant.setRental(BigDecimal.valueOf(5000));
+        tenant.setRentalAmount(BigDecimal.valueOf(5000));
         tenant.setPaymentDay(PaymentDay.DAY_7); // Assuming today is the 8th
 
         when(tenantService.findAllTenants()).thenReturn(Collections.singletonList(tenant));
@@ -66,7 +66,7 @@ public class RentReminderSchedulerTest {
         tenant.setId(1);
         tenant.setName("John");
         tenant.setSurname("Doe");
-        tenant.setRental(BigDecimal.valueOf(5000));
+        tenant.setRentalAmount(BigDecimal.valueOf(5000));
         tenant.setPaymentDay(PaymentDay.DAY_7); // Assuming today is the 8th
 
         when(tenantService.findAllTenants()).thenReturn(Collections.singletonList(tenant));
