@@ -100,12 +100,21 @@ public class TenantService {
         boolean becomingInactive = updatedTenant.getTenantStatus() == TenantStatus.INACTIVE
                 && existingTenant.getTenantStatus() != TenantStatus.INACTIVE;
 
+        boolean becomingActive = updatedTenant.getTenantStatus() == TenantStatus.ACTIVE
+                && existingTenant.getTenantStatus() != TenantStatus.ACTIVE;
+
         // If tenant is being deactivated, free their room
         if (becomingInactive && oldRoom != null) {
             oldRoom.setOccupied(false);
             roomRepository.save(oldRoom);
+        } else if (becomingActive && newRoom != null) {
+            // Tenant reactivated — mark their assigned room as occupied
+            Room roomToOccupy = roomRepository.findById(newRoom.getId())
+                    .orElseThrow(() -> new RuntimeException("Room not found"));
+            roomToOccupy.setOccupied(true);
+            roomRepository.save(roomToOccupy);
         } else {
-            // Normal room swap logic
+            // Normal room swap logic (tenant stays active, just changing rooms)
             if (oldRoom != null && (newRoom == null || !oldRoom.getId().equals(newRoom.getId()))) {
                 oldRoom.setOccupied(false);
                 roomRepository.save(oldRoom);
