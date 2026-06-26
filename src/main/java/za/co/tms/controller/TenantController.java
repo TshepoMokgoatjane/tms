@@ -40,7 +40,7 @@ public class TenantController {
 		return ResponseEntity.ok(tenantService.findTenantByName(name));
 	}
 	
-	@GetMapping(path="/find/by-id/{id}")
+	@GetMapping(path="/find/by/{id}")
 	public ResponseEntity<Tenant> retrieveTenantById(@PathVariable Integer id) {
 		return ResponseEntity.ok(tenantService.findTenantById(id));
 	}
