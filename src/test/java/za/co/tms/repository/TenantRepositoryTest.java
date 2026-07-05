@@ -6,7 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import za.co.tms.domain.PaymentDay;
 import za.co.tms.domain.Room;
 import za.co.tms.domain.Tenant;
@@ -22,7 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
 @EntityScan(basePackages = "za.co.tms.domain")
-@ActiveProfiles("test")
+@EnableJpaRepositories(basePackages = "za.co.tms.repository")
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 public class TenantRepositoryTest {
 
     private static final String TENANT_NAME = "Tshepo";

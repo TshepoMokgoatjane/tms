@@ -40,7 +40,7 @@ public class GlobalExceptionHandlerTest {
     public void testTenantNotFoundException() throws Exception {
         when(tenantService.findTenantById(999)).thenThrow(new TenantNotFoundException("Tenant with ID 999 was not found"));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/tenants/find/by-id/999"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/tenants/find/by/999"))
                 .andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.errorCode").value("TENANT_NOT_FOUND"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Tenant with ID 999 was not found"));

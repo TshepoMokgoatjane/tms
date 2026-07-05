@@ -37,7 +37,7 @@ public class TenantControllerTest {
     private static final String BASE_URL = "/tenants";
     private static final String FIND_ALL = BASE_URL + "/find/all";
     private static final String FIND_BY_NAME = BASE_URL + "/find/by-name/{name}";
-    private static final String FIND_BY_ID = BASE_URL + "/find/by-id/{id}";
+    private static final String FIND_BY_ID = BASE_URL + "/find/by/{id}";
     private static final String CREATE = BASE_URL + "/create";
     private static final String UPDATE = BASE_URL + "/update/{id}";
     private static final String DELETE = BASE_URL + "/delete/{id}";
@@ -187,7 +187,7 @@ public class TenantControllerTest {
                 .content(objectMapper.writeValueAsString(tenant)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("VALIDATION_FAILED"))
-                .andExpect(jsonPath("$.errors.rental").value("Rental must be zero or positive"));
+                .andExpect(jsonPath("$.errors.rentalAmount").value("Rental must be zero or positive"));
     }
 
     @Test
