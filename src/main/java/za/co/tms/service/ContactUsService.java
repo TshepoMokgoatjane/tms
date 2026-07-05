@@ -3,6 +3,8 @@ package za.co.tms.service;
 import java.util.List;
 import java.util.function.Predicate;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -11,12 +13,16 @@ import za.co.tms.repository.ContactUsRepository;
 
 @Service
 public class ContactUsService {
-	
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ContactUsService.class);
+
 	private final ContactUsRepository contactUsRepository;
+	private final EmailService emailService;
 	
 	@Autowired
-	public ContactUsService(ContactUsRepository contactUsRepository) {
+	public ContactUsService(ContactUsRepository contactUsRepository, EmailService emailService) {
 		this.contactUsRepository = contactUsRepository;
+		this.emailService = emailService;
 	}
 	
 	public List<ContactUs> findAllContactUs() {
@@ -50,8 +56,13 @@ public class ContactUsService {
 	
 	public ContactUs addContactUs(ContactUs contactUs) {
 		contactUs.setId(null);
-		
-		return contactUsRepository.save(contactUs);
+		ContactUs saved = contactUsRepository.save(contactUs);
+
+		// Send email notification to business inbox
+		LOGGER.info("New Contact Us submission from {} {}", contactUs.getFirstName(), contactUs.getLastName());
+		emailService.sendContactUsNotification(saved);
+
+		return saved;
 	}
 	
 	public void deleteContactUsById(int id) {
