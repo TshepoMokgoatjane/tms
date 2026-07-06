@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import za.co.tms.domain.*;
 import za.co.tms.repository.PaymentRepository;
 import za.co.tms.repository.TenantRepository;
+import za.co.tms.service.PaymentService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,13 +26,33 @@ import java.util.Optional;
 public class PaymentController {
 
     private final TenantRepository tenantRepository;
-
     private final PaymentRepository paymentRepository;
+    private final PaymentService paymentService;
 
     @Autowired
-    public PaymentController(PaymentRepository paymentRepository, TenantRepository tenantRepository) {
+    public PaymentController(PaymentRepository paymentRepository, TenantRepository tenantRepository, PaymentService paymentService) {
         this.paymentRepository = paymentRepository;
         this.tenantRepository = tenantRepository;
+        this.paymentService = paymentService;
+    }
+
+    @GetMapping("/all")
+    @Operation(summary = "Get all payments", description = "Returns all payment records")
+    public ResponseEntity<List<Payment>> getAllPayments() {
+        return ResponseEntity.ok(paymentService.findAll());
+    }
+
+    @PostMapping("/record")
+    @Operation(summary = "Record a payment", description = "Records a new payment (supports backdated entries for historical data)")
+    public ResponseEntity<Payment> recordPayment(@RequestBody Payment payment) {
+        return ResponseEntity.ok(paymentService.recordPayment(payment));
+    }
+
+    @DeleteMapping("/{paymentId}")
+    @Operation(summary = "Delete a payment", description = "Removes a payment record")
+    public ResponseEntity<Void> deletePayment(@PathVariable Long paymentId) {
+        paymentService.deletePayment(paymentId);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Get all payments for a tenant", description = "Returns all payment records for the specified tenant ID")
