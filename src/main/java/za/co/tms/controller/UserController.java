@@ -85,7 +85,7 @@ public class UserController {
     }
 
     @GetMapping("/user/profile")
-    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_TENANT')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_USER') or hasAuthority('ROLE_TENANT')")
     public ResponseEntity<AppUser> getUserProfile(Authentication authentication) {
         AppUser user = appUserService.findByUsername(authentication.getName());
         user.setPassword(null); // Don't expose password
@@ -93,7 +93,7 @@ public class UserController {
     }
 
     @PutMapping("/user/profile")
-    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_TENANT')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_USER') or hasAuthority('ROLE_TENANT')")
     public ResponseEntity<AppUser> updateUserProfile(Authentication authentication, @RequestBody AppUser updatedUser) {
         AppUser currentUser = appUserService.findByUsername(authentication.getName());
         AppUser updated = appUserService.updateProfile(currentUser.getId(), updatedUser);
