@@ -2,6 +2,8 @@ package za.co.tms.controller;
 
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,51 +19,62 @@ import za.co.tms.domain.FAQs;
 import za.co.tms.service.FAQsService;
 
 @RestController
-@RequestMapping("/FAQs")
+@RequestMapping("/faqs")
+@Tag(name = "FAQs Controller", description = "Endpoints for managing FAQs")
 public class FAQsController {
 
-	private FAQsService faqsService;
-	
-	@Autowired
-	public FAQsController(FAQsService faqsService) {
-		this.faqsService = faqsService;
-	}
-	
-	@GetMapping(path="/find/all")
-	public List<FAQs> retrieveFAQs() {
-		return faqsService.findAllFAQs();
-	}
-	
-	@GetMapping(path="/find/{id}")
-	public FAQs retrieveFAQsById(@PathVariable int id) {
-		return faqsService.findFAQsById(id);
-	}
-	
-	@GetMapping(path="/find/{question}")
-	public FAQs retrieveFAQsByQuestion(@PathVariable String question) {
-		return faqsService.findFAQsByQuestion(question); 
-	}
-	
-	@GetMapping(path="/find/{answer}")
-	public FAQs retrieveFAQsByAnswer(@PathVariable String answer) {
-		return faqsService.findFAQsByAnswer(answer);
-	}
-	
-	@DeleteMapping(path="/delete/{id}")
-	public ResponseEntity<Void> deleteFAQsById(@PathVariable int id) {
-		faqsService.deleteFAQsById(id);
-		return ResponseEntity.noContent().build();
-	}
-	
-	@PutMapping(path="/update/{id}")
-	public FAQs updateFAQs(@PathVariable int id, @RequestBody FAQs faqs) {
-		faqsService.updateFAQs(faqs);
-		return faqs;
-	}
-	
-	@PostMapping(path="/create")
-	public FAQs createFAQs(@RequestBody FAQs faqs) {
-		FAQs createdFAQs = faqsService.addFAQs(faqs);
-		return createdFAQs;
-	}
+    private final FAQsService faqsService;
+
+    @Autowired
+    public FAQsController(FAQsService faqsService) {
+        this.faqsService = faqsService;
+    }
+
+    // ========== PUBLIC ENDPOINTS ==========
+
+    @GetMapping("/active")
+    @Operation(summary = "Get active FAQs", description = "Returns only active FAQs ordered by display order (public)")
+    public ResponseEntity<List<FAQs>> getActiveFAQs() {
+        return ResponseEntity.ok(faqsService.findActiveFAQs());
+    }
+
+    // ========== ADMIN ENDPOINTS ==========
+
+    @GetMapping("/find/all")
+    @Operation(summary = "Get all FAQs", description = "Returns all FAQs regardless of status (admin)")
+    public ResponseEntity<List<FAQs>> getAllFAQs() {
+        return ResponseEntity.ok(faqsService.findAllFAQs());
+    }
+
+    @GetMapping("/find/{id}")
+    @Operation(summary = "Get FAQ by ID")
+    public ResponseEntity<FAQs> getFAQById(@PathVariable int id) {
+        return ResponseEntity.ok(faqsService.findFAQsById(id));
+    }
+
+    @PostMapping("/create")
+    @Operation(summary = "Create a new FAQ")
+    public ResponseEntity<FAQs> createFAQ(@RequestBody FAQs faqs) {
+        return ResponseEntity.ok(faqsService.addFAQs(faqs));
+    }
+
+    @PutMapping("/update/{id}")
+    @Operation(summary = "Update an existing FAQ")
+    public ResponseEntity<FAQs> updateFAQ(@PathVariable int id, @RequestBody FAQs faqs) {
+        return ResponseEntity.ok(faqsService.updateFAQs(id, faqs));
+    }
+
+    @PutMapping("/{id}/toggle-active")
+    @Operation(summary = "Toggle FAQ active status")
+    public ResponseEntity<Void> toggleActive(@PathVariable int id) {
+        faqsService.toggleActive(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/delete/{id}")
+    @Operation(summary = "Delete a FAQ")
+    public ResponseEntity<Void> deleteFAQ(@PathVariable int id) {
+        faqsService.deleteFAQsById(id);
+        return ResponseEntity.noContent().build();
+    }
 }
