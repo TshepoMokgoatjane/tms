@@ -38,6 +38,7 @@ public class JwtSecurityConfig {
 
         httpSecurity
             .csrf(csrf -> csrf.disable())
+            .securityContext(context -> context.requireExplicitSave(false))
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
                 .requestMatchers("/auth/welcome", "/auth/register", "/auth/addNewUser", "/auth/generateToken").permitAll()

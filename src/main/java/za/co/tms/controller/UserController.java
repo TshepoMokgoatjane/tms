@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
@@ -85,17 +86,27 @@ public class UserController {
     }
 
     @GetMapping("/user/profile")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_USER') or hasAuthority('ROLE_TENANT')")
     public ResponseEntity<AppUser> getUserProfile(Authentication authentication) {
-        AppUser user = appUserService.findByUsername(authentication.getName());
+        String username;
+        if (authentication != null) {
+            username = authentication.getName();
+        } else {
+            username = SecurityContextHolder.getContext().getAuthentication().getName();
+        }
+        AppUser user = appUserService.findByUsername(username);
         user.setPassword(null); // Don't expose password
         return ResponseEntity.ok(user);
     }
 
     @PutMapping("/user/profile")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_USER') or hasAuthority('ROLE_TENANT')")
     public ResponseEntity<AppUser> updateUserProfile(Authentication authentication, @RequestBody AppUser updatedUser) {
-        AppUser currentUser = appUserService.findByUsername(authentication.getName());
+        String username;
+        if (authentication != null) {
+            username = authentication.getName();
+        } else {
+            username = SecurityContextHolder.getContext().getAuthentication().getName();
+        }
+        AppUser currentUser = appUserService.findByUsername(username);
         AppUser updated = appUserService.updateProfile(currentUser.getId(), updatedUser);
         updated.setPassword(null);
         return ResponseEntity.ok(updated);

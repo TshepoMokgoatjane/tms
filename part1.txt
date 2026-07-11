@@ -1,0 +1,41 @@
+filepath = r'c:\devSpace\tms\src\main\java\za\co\tms\jwt\JwtAuthenticationFilter.java'
+content = '''
+package za.co.tms.jwt;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import za.co.tms.service.AppUserService;
+
+@Component
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+ private static final Logger LOGGER = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
+ private final AppUserService appUserService;
+ private final JwtDecoder jwtDecoder;
+
+ @Autowired
