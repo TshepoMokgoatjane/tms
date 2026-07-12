@@ -16,58 +16,58 @@ import za.co.tms.service.TestimonialService;
 @Tag(name = "Testimonial Controller", description = "Endpoints for managing testimonials")
 public class TestimonialController {
 
- private final TestimonialService testimonialService;
+    private final TestimonialService testimonialService;
 
- @Autowired
- public TestimonialController(TestimonialService testimonialService) {
- this.testimonialService = testimonialService;
- }
+    @Autowired
+    public TestimonialController(TestimonialService testimonialService) {
+        this.testimonialService = testimonialService;
+    }
 
- // ========== PUBLIC ENDPOINTS ==========
+    // ========== PUBLIC ENDPOINTS ==========
 
- @GetMapping("/active")
- @Operation(summary = "Get active testimonials", description = "Returns only active testimonials for the public page")
- public ResponseEntity<List<Testimonial>> getActiveTestimonials() {
- return ResponseEntity.ok(testimonialService.findActive());
- }
+    @GetMapping("/active")
+    @Operation(summary = "Get active testimonials", description = "Returns only active testimonials for the public page")
+    public ResponseEntity<List<Testimonial>> getActiveTestimonials() {
+        return ResponseEntity.ok(testimonialService.findActive());
+    }
 
- // ========== ADMIN ENDPOINTS ==========
+    // ========== ADMIN ENDPOINTS ==========
 
- @GetMapping("/all")
- @Operation(summary = "Get all testimonials", description = "Returns all testimonials regardless of status")
- public ResponseEntity<List<Testimonial>> getAllTestimonials() {
- return ResponseEntity.ok(testimonialService.findAll());
- }
+    @GetMapping("/all")
+    @Operation(summary = "Get all testimonials", description = "Returns all testimonials regardless of status")
+    public ResponseEntity<List<Testimonial>> getAllTestimonials() {
+        return ResponseEntity.ok(testimonialService.findAll());
+    }
 
- @GetMapping("/{id}")
- @Operation(summary = "Get testimonial by ID")
- public ResponseEntity<Testimonial> getById(@PathVariable int id) {
- return ResponseEntity.ok(testimonialService.findById(id));
- }
+    @GetMapping("/{id}")
+    @Operation(summary = "Get testimonial by ID")
+    public ResponseEntity<Testimonial> getById(@PathVariable int id) {
+        return ResponseEntity.ok(testimonialService.findById(id));
+    }
 
- @PostMapping
- @Operation(summary = "Create a new testimonial")
- public ResponseEntity<Testimonial> create(@RequestBody Testimonial testimonial) {
- return ResponseEntity.ok(testimonialService.create(testimonial));
- }
+    @PostMapping
+    @Operation(summary = "Create a new testimonial")
+    public ResponseEntity<Testimonial> create(@RequestBody Testimonial testimonial) {
+        return ResponseEntity.ok(testimonialService.create(testimonial));
+    }
 
- @PutMapping("/{id}")
- @Operation(summary = "Update a testimonial")
- public ResponseEntity<Testimonial> update(@PathVariable int id, @RequestBody Testimonial testimonial) {
- return ResponseEntity.ok(testimonialService.update(id, testimonial));
- }
+    @PutMapping("/{id}")
+    @Operation(summary = "Update a testimonial")
+    public ResponseEntity<Testimonial> update(@PathVariable int id, @RequestBody Testimonial testimonial) {
+        return ResponseEntity.ok(testimonialService.update(id, testimonial));
+    }
 
- @PutMapping("/{id}/toggle-active")
- @Operation(summary = "Toggle testimonial visibility")
- public ResponseEntity<Void> toggleActive(@PathVariable int id) {
- testimonialService.toggleActive(id);
- return ResponseEntity.ok().build();
- }
+    @PutMapping("/{id}/toggle-active")
+    @Operation(summary = "Toggle testimonial visibility")
+    public ResponseEntity<Void> toggleActive(@PathVariable int id) {
+        testimonialService.toggleActive(id);
+        return ResponseEntity.ok().build();
+    }
 
- @DeleteMapping("/{id}")
- @Operation(summary = "Delete a testimonial")
- public ResponseEntity<Void> delete(@PathVariable int id) {
- testimonialService.delete(id);
- return ResponseEntity.noContent().build();
- }
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete a testimonial")
+    public ResponseEntity<Void> delete(@PathVariable int id) {
+        testimonialService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
 }
