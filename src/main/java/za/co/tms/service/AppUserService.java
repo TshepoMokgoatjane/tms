@@ -90,4 +90,13 @@ public class AppUserService implements UserDetailsService {
         appUserRepository.save(user);
         log.info("User {} deactivated", user.getUsername());
     }
+
+    public AppUser updateRole(int id, UserRoles role) {
+        AppUser user = findById(id);
+        user.setRole(role);
+        user.setDateModified(LocalDateTime.now());
+        appUserRepository.save(user);
+        log.info("User {} role updated to {}", user.getUsername(), role);
+        return user;
+    }
 }
