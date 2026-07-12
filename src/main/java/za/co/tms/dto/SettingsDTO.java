@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Map;
 
 @Data
 @AllArgsConstructor
@@ -43,4 +42,11 @@ public class SettingsDTO {
     private int occupiedRooms;
     private int totalTenants;
     private int totalUsers;
+
+    // Project Size Info
+    private double backendSizeMB;
+    private double frontendSizeMB;
+    private double backendSourceSizeMB;
+    private double frontendSourceSizeMB;
 }
+

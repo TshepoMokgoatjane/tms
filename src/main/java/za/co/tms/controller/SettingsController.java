@@ -60,6 +60,12 @@ public class SettingsController {
     @Value("${spring.jpa.properties.hibernate.dialect:unknown}")
     private String hibernateDialect;
 
+    @Value("${app.backend.path:c:/devSpace/tms}")
+    private String backendPath;
+
+    @Value("${app.frontend.path:c:/devSpace/tms-front-end}")
+    private String frontendPath;
+
     @Autowired
     public SettingsController(AppUserService appUserService,
                               AppUserRepository appUserRepository,
@@ -109,6 +115,12 @@ public class SettingsController {
         dto.setTotalTenants((int) tenantRepository.count());
         dto.setTotalUsers((int) appUserRepository.count());
 
+        // Project Size Info
+        dto.setBackendSizeMB(getDirectorySizeMB(backendPath));
+        dto.setFrontendSizeMB(getDirectorySizeMB(frontendPath));
+        dto.setBackendSourceSizeMB(getDirectorySizeMB(backendPath + "/src"));
+        dto.setFrontendSourceSizeMB(getDirectorySizeMB(frontendPath + "/src"));
+
         return ResponseEntity.ok(dto);
     }
 
@@ -125,5 +137,31 @@ public class SettingsController {
         if (hibernateDialect.contains("PostgreSQL")) return "PostgreSQL";
         if (hibernateDialect.contains("H2")) return "H2 (Test)";
         return "Unknown";
+    }
+
+    private double getDirectorySizeMB(String path) {
+        try {
+            java.io.File dir = new java.io.File(path);
+            if (!dir.exists()) return 0;
+            long size = getDirectorySize(dir);
+            return Math.round(size / (1024.0 * 1024.0) * 100.0) / 100.0;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private long getDirectorySize(java.io.File dir) {
+        long size = 0;
+        java.io.File[] files = dir.listFiles();
+        if (files != null) {
+            for (java.io.File file : files) {
+                if (file.isFile()) {
+                    size += file.length();
+                } else if (file.isDirectory()) {
+                    size += getDirectorySize(file);
+                }
+            }
+        }
+        return size;
     }
 }
