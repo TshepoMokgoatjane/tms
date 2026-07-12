@@ -47,6 +47,7 @@ public class JwtSecurityConfig {
                 .requestMatchers("/api/payments/**").permitAll()
                 .requestMatchers("/api/gallery/active", "/api/gallery/image/**").permitAll()
                 .requestMatchers("/faqs/**").permitAll()
+ .requestMatchers("/api/testimonials/active").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 // Role-based access
