@@ -158,6 +158,11 @@ public class SettingsController {
                 if (file.isFile()) {
                     size += file.length();
                 } else if (file.isDirectory()) {
+                    String name = file.getName();
+                    // Skip large dependency/build directories for performance
+                    if (name.equals("node_modules") || name.equals("target") || name.equals(".git")) {
+                        continue;
+                    }
                     size += getDirectorySize(file);
                 }
             }
