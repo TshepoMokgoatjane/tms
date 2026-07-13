@@ -99,4 +99,19 @@ public class AppUserService implements UserDetailsService {
         log.info("User {} role updated to {}", user.getUsername(), role);
         return user;
     }
+
+    public AppUser linkTenant(int userId, Integer tenantId) {
+        AppUser user = findById(userId);
+        if (tenantId == null) {
+            user.setTenant(null);
+            log.info("User {} unlinked from tenant", user.getUsername());
+        } else {
+            Tenant tenant = new Tenant();
+            tenant.setId(tenantId);
+            user.setTenant(tenant);
+            log.info("User {} linked to tenant ID {}", user.getUsername(), tenantId);
+        }
+        user.setDateModified(LocalDateTime.now());
+        return appUserRepository.save(user);
+    }
 }

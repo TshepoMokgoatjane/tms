@@ -8,6 +8,7 @@ import org.springframework.boot.SpringBootVersion;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import za.co.tms.domain.AppUser;
+import za.co.tms.domain.Tenant;
 import za.co.tms.domain.UserRoles;
 import za.co.tms.dto.SettingsDTO;
 import za.co.tms.repository.AppUserRepository;
@@ -16,6 +17,7 @@ import za.co.tms.repository.TenantRepository;
 import za.co.tms.service.AppUserService;
 
 import java.lang.management.ManagementFactory;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/settings")
@@ -128,6 +130,29 @@ public class SettingsController {
     @Operation(summary = "Update user role", description = "Change a user's role (ADMIN only)")
     public ResponseEntity<AppUser> updateUserRole(@PathVariable int id, @RequestParam UserRoles role) {
         AppUser updated = appUserService.updateRole(id, role);
+        updated.setPassword(null);
+        return ResponseEntity.ok(updated);
+    }
+
+    @GetMapping("/unlinked-tenants")
+    @Operation(summary = "Get unlinked tenants", description = "Returns tenants not currently linked to any user account")
+    public ResponseEntity<List<Tenant>> getUnlinkedTenants() {
+        List<Integer> linkedTenantIds = appUserRepository.findAll().stream()
+                .filter(u -> u.getTenant() != null)
+                .map(u -> u.getTenant().getId())
+                .toList();
+
+        List<Tenant> unlinked = tenantRepository.findAll().stream()
+                .filter(t -> !linkedTenantIds.contains(t.getId()))
+                .toList();
+
+        return ResponseEntity.ok(unlinked);
+    }
+
+    @PutMapping("/users/{id}/link-tenant")
+    @Operation(summary = "Link user to tenant", description = "Associates a user account with a tenant record")
+    public ResponseEntity<AppUser> linkUserToTenant(@PathVariable int id, @RequestParam(required = false) Integer tenantId) {
+        AppUser updated = appUserService.linkTenant(id, tenantId);
         updated.setPassword(null);
         return ResponseEntity.ok(updated);
     }
