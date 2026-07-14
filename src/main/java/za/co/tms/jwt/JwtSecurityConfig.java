@@ -37,6 +37,7 @@ public class JwtSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity, HandlerMappingIntrospector introspector) throws Exception {
 
         httpSecurity
+            .cors(cors -> {})
             .csrf(csrf -> csrf.disable())
             .securityContext(context -> context.requireExplicitSave(false))
             .authorizeHttpRequests(auth -> auth
