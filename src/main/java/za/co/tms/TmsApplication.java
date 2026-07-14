@@ -24,7 +24,9 @@ public class TmsApplication {
 				registry.addMapping("/**")
 				.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
 				.allowedHeaders("*")
-				.allowedOrigins("http://localhost:3000");
+				.allowedOrigins(
+						"http://localhost:3000",
+						"https://tms-front-end-production.up.railway.app");
 			}
 		};
 	}
