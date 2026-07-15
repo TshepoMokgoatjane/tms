@@ -1,13 +1,9 @@
 package za.co.tms.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,13 +15,8 @@ import za.co.tms.domain.GalleryImageStatus;
 import za.co.tms.service.GalleryImageService;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/gallery")
@@ -35,22 +26,10 @@ public class GalleryImageController {
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
 
     private final GalleryImageService galleryImageService;
-    private final Path uploadDir;
 
     @Autowired
-    public GalleryImageController(GalleryImageService galleryImageService,
-                                  @Value("${gallery.upload.dir:uploads/gallery}") String uploadDirPath) {
+    public GalleryImageController(GalleryImageService galleryImageService) {
         this.galleryImageService = galleryImageService;
-        this.uploadDir = Paths.get(uploadDirPath).toAbsolutePath().normalize();
-    }
-
-    @PostConstruct
-    public void init() {
-        try {
-            Files.createDirectories(this.uploadDir);
-        } catch (IOException e) {
-            LOGGER.warn("Could not create gallery upload directory: {}. File uploads will fail until directory is available.", uploadDir);
-        }
     }
 
     // ========== PUBLIC ENDPOINTS ==========
@@ -61,36 +40,21 @@ public class GalleryImageController {
         return ResponseEntity.ok(galleryImageService.getActiveGalleryImages());
     }
 
-    @GetMapping("/image/{filename}")
-    @Operation(summary = "Serve an image file", description = "Returns the actual image binary for display")
-    public ResponseEntity<Resource> serveImage(@PathVariable String filename) {
-        try {
-            Path filePath = uploadDir.resolve(filename).normalize();
+    @GetMapping("/image/{id}")
+    @Operation(summary = "Serve an image by ID", description = "Returns the actual image binary from the database")
+    public ResponseEntity<byte[]> serveImage(@PathVariable Long id) {
+        GalleryImage image = galleryImageService.getGalleryImageById(id);
 
-            // Security: prevent path traversal
-            if (!filePath.startsWith(uploadDir)) {
-                return ResponseEntity.badRequest().build();
-            }
-
-            Resource resource = new UrlResource(filePath.toUri());
-
-            if (!resource.exists() || !resource.isReadable()) {
-                return ResponseEntity.notFound().build();
-            }
-
-            String contentType = Files.probeContentType(filePath);
-            if (contentType == null) {
-                contentType = "application/octet-stream";
-            }
-
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(contentType))
-                    .header(HttpHeaders.CACHE_CONTROL, "max-age=86400")
-                    .body(resource);
-        } catch (IOException e) {
-            LOGGER.error("Error serving image {}: {}", filename, e.getMessage());
-            return ResponseEntity.internalServerError().build();
+        if (image.getImageData() == null || image.getImageData().length == 0) {
+            return ResponseEntity.notFound().build();
         }
+
+        String contentType = image.getContentType() != null ? image.getContentType() : "application/octet-stream";
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CACHE_CONTROL, "max-age=86400")
+                .body(image.getImageData());
     }
 
     // ========== ADMIN ENDPOINTS ==========
@@ -108,7 +72,7 @@ public class GalleryImageController {
     }
 
     @PostMapping("/upload")
-    @Operation(summary = "Upload a new image", description = "Accepts multipart file upload with metadata")
+    @Operation(summary = "Upload a new image", description = "Accepts multipart file upload with metadata, stores in database")
     public ResponseEntity<GalleryImage> uploadImage(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "title", required = false) String title,
@@ -127,33 +91,25 @@ public class GalleryImageController {
         }
 
         try {
-            // Generate unique filename
-            String extension = getFileExtension(file.getOriginalFilename());
-            String storedFilename = UUID.randomUUID() + extension;
-
-            // Save file to disk
-            Path targetPath = uploadDir.resolve(storedFilename);
-            Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-
-            // Build entity
+            // Build entity with image data stored in DB
             GalleryImage image = new GalleryImage();
             image.setTitle(title);
             image.setDescription(description);
-            image.setFilename(storedFilename);
             image.setOriginalFilename(file.getOriginalFilename());
             image.setContentType(contentType);
             image.setFileSize(file.getSize());
+            image.setImageData(file.getBytes());
             image.setCategory(GalleryImageCategory.valueOf(category.toUpperCase()));
             image.setStatus(GalleryImageStatus.ACTIVE);
             image.setDisplayOrder(0);
 
             GalleryImage saved = galleryImageService.createGalleryImage(image);
 
-            LOGGER.info("Image uploaded: {} -> {}", file.getOriginalFilename(), storedFilename);
+            LOGGER.info("Image uploaded to database: {} ({} bytes)", file.getOriginalFilename(), file.getSize());
 
             return ResponseEntity.ok(saved);
         } catch (IOException e) {
-            LOGGER.error("Failed to store uploaded file: {}", e.getMessage());
+            LOGGER.error("Failed to read uploaded file: {}", e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -180,26 +136,9 @@ public class GalleryImageController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete an image", description = "Permanently removes the image record and file")
+    @Operation(summary = "Delete an image", description = "Permanently removes the image record from the database")
     public ResponseEntity<Void> deleteImage(@PathVariable Long id) {
-        GalleryImage image = galleryImageService.getGalleryImageById(id);
-
-        // Delete file from disk
-        try {
-            Path filePath = uploadDir.resolve(image.getFilename());
-            Files.deleteIfExists(filePath);
-        } catch (IOException e) {
-            LOGGER.warn("Could not delete file {} from disk: {}", image.getFilename(), e.getMessage());
-        }
-
         galleryImageService.deleteGalleryImage(id);
         return ResponseEntity.noContent().build();
-    }
-
-    private String getFileExtension(String filename) {
-        if (filename == null || !filename.contains(".")) {
-            return "";
-        }
-        return filename.substring(filename.lastIndexOf("."));
     }
 }

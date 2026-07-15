@@ -1,5 +1,6 @@
 package za.co.tms.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -18,43 +19,45 @@ import java.io.Serializable;
 @Schema(description = "Gallery entity representing images of the property, the room, the interior, and exterior")
 public class GalleryImage extends AuditModel implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+ @Serial
+ private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(updatable = false, nullable = false)
-    private Long id;
+ @Id
+ @GeneratedValue(strategy = GenerationType.IDENTITY)
+ @Column(updatable = false, nullable = false)
+ private Long id;
 
-    @Schema(description = "Image title/caption", example = "Living room view")
-    private String title;
+ @Schema(description = "Image title/caption", example = "Living room view")
+ private String title;
 
-    @Schema(description = "Image description", example = "Spacious living room with natural light")
-    private String description;
+ @Schema(description = "Image description", example = "Spacious living room with natural light")
+ private String description;
 
-    @Column(nullable = false)
-    @Schema(description = "Stored filename (UUID-based)", example = "a3f2b1c4-1234-5678-9abc-def012345678.jpg")
-    private String filename;
+ @Schema(description = "Original uploaded filename", example = "living-room.jpg")
+ private String originalFilename;
 
-    @Schema(description = "Original uploaded filename", example = "living-room.jpg")
-    private String originalFilename;
+ @Schema(description = "MIME type", example = "image/jpeg")
+ private String contentType;
 
-    @Schema(description = "MIME type", example = "image/jpeg")
-    private String contentType;
+ @Schema(description = "File size in bytes", example = "245000")
+ private Long fileSize;
 
-    @Schema(description = "File size in bytes", example = "245000")
-    private Long fileSize;
+ @Lob
+ @JsonIgnore
+ @Column(name = "image_data", columnDefinition = "LONGBLOB")
+ @Schema(hidden = true)
+ private byte[] imageData;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Schema(description = "Image category", example = "ROOM")
-    private GalleryImageCategory category;
+ @Enumerated(EnumType.STRING)
+ @Column(nullable = false)
+ @Schema(description = "Image category", example = "ROOM")
+ private GalleryImageCategory category;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Schema(description = "Image visibility status", example = "ACTIVE")
-    private GalleryImageStatus status;
+ @Enumerated(EnumType.STRING)
+ @Column(nullable = false)
+ @Schema(description = "Image visibility status", example = "ACTIVE")
+ private GalleryImageStatus status;
 
-    @Schema(description = "Display order for sorting", example = "1")
-    private int displayOrder;
+ @Schema(description = "Display order for sorting", example = "1")
+ private int displayOrder;
 }
