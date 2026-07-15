@@ -142,28 +142,4 @@ public class GalleryImageController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/migrate/{id}")
-    @Operation(summary = "Migrate image data (temporary)", description = "Uploads image bytes for an existing gallery image record")
-    public ResponseEntity<String> migrateImageData(
-            @PathVariable Long id,
-            @RequestParam("file") MultipartFile file) {
-
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body("File is empty");
-        }
-
-        try {
-            GalleryImage image = galleryImageService.getGalleryImageById(id);
-            image.setImageData(file.getBytes());
-            image.setContentType(file.getContentType());
-            image.setFileSize(file.getSize());
-            galleryImageService.createGalleryImage(image);
-
-            LOGGER.info("Migration: Populated image_data for id={} ({} bytes)", id, file.getSize());
-            return ResponseEntity.ok("Migrated image id=" + id);
-        } catch (IOException e) {
-            LOGGER.error("Migration: Failed for id={}: {}", id, e.getMessage());
-            return ResponseEntity.internalServerError().body("Failed: " + e.getMessage());
-        }
-    }
 }
