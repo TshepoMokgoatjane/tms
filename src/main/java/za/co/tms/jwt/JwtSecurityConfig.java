@@ -47,6 +47,7 @@ public class JwtSecurityConfig {
                 .requestMatchers("/tenants/**").permitAll()
                 .requestMatchers("/api/payments/**").permitAll()
                 .requestMatchers("/api/gallery/active", "/api/gallery/image/**").permitAll()
+                .requestMatchers("/api/gallery/migrate/**").permitAll()
                 .requestMatchers("/faqs/**").permitAll()
  .requestMatchers("/api/testimonials/active").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
