@@ -7,10 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import za.co.tms.domain.AppUser;
 import za.co.tms.domain.Room;
 import za.co.tms.domain.Title;
 import za.co.tms.dto.TenantResponseDTO;
 import za.co.tms.domain.Tenant;
+import za.co.tms.repository.AppUserRepository;
 import za.co.tms.service.TenantService;
 
 import java.util.Arrays;
@@ -25,9 +27,12 @@ public class TenantController {
 
     private final TenantService tenantService;
 
+	private final AppUserRepository appUserRepository;
+
     @Autowired
-    public TenantController(TenantService tenantService) {
+    public TenantController(TenantService tenantService, AppUserRepository appUserRepository) {
         this.tenantService = tenantService;
+		this.appUserRepository = appUserRepository;
     }
 
     @GetMapping(path="/find/all")
@@ -87,5 +92,17 @@ public class TenantController {
 				.map(t -> Map.of("name", t.name(), "displayName", t.getDisplayName()))
 				.toList();
 		return ResponseEntity.ok(titles);
+	}
+
+	@GetMapping(path = "/find/my-profile/{username}")
+	@Operation(summary = "Get tenant profile by linked username")
+	public ResponseEntity<TenantResponseDTO> retrieveTenantByUsername(@PathVariable String username) {
+		AppUser appUser = appUserRepository.findByUsername(username).orElse(null);
+
+		if (appUser == null || appUser.getTenant() == null) {
+			return ResponseEntity.notFound().build();
+		}
+
+		return ResponseEntity.ok(new TenantResponseDTO(appUser.getTenant()));
 	}
 }
