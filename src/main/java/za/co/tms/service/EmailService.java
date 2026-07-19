@@ -85,4 +85,19 @@ public class EmailService {
                     tenant.getName(), tenant.getSurname(), e.getMessage());
         }
     }
+
+    @Async
+    public void send(String to, String subject, String body) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            message.setSubject(subject);
+            message.setText(body);
+            mailSender.send(message);
+            log.info("Email sent to {} - Subject: {}", to, subject);
+        } catch (MailException e) {
+            log.error("Failed to send email to {}: {}", to, e.getMessage());
+        }
+    }
+
 }

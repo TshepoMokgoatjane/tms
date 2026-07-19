@@ -24,7 +24,7 @@ public class TicketService {
 		return ticketRepository.findAll();
 	}
 	
-	public Ticket findHelpdeskTicketById(int id) {
+	public Ticket findHelpdeskTicketById(Long id) {
 		Predicate<? super Ticket> predicate = helpdeskTicket -> helpdeskTicket.getId() == id;
 		Ticket HelpdeskTicket = ticketRepository.findTicketById(id).stream().filter(predicate).findFirst().get();
 		return HelpdeskTicket;
@@ -37,7 +37,7 @@ public class TicketService {
 		return ticketRepository.save(helpdeskTicket);
 	}
 	
-	public void deleteHelpdeskTicketById(int id) {
+	public void deleteHelpdeskTicketById(Long id) {
 		Ticket helpdeskTicket = findHelpdeskTicketById(id);
 		helpdeskTicket.setStatus(Status.CLOSED);
 		ticketRepository.save(helpdeskTicket);

@@ -30,7 +30,7 @@ public class Ticket implements Serializable {
 	@Id
 	@Column(updatable = false, nullable = false)
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
+	private Long id;
 	
 	private Integer ticketNumber;	
 	private String raisedBy;	
