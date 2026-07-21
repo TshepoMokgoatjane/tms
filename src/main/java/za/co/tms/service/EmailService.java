@@ -2,102 +2,108 @@ package za.co.tms.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import za.co.tms.domain.ContactUs;
 import za.co.tms.domain.Tenant;
+
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    @Value("${brevo.api.key:no-key}")
+    private String brevoApiKey;
+
+    @Value("${brevo.sender.email:noreply@tltproperties.co.za}")
+    private String senderEmail;
+
+    @Value("${brevo.sender.name:TLT Properties}")
+    private String senderName;
 
     @Value("${contact.notification.email}")
     private String contactNotificationEmail;
 
-    public EmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
-    }
+    private final RestTemplate restTemplate = new RestTemplate();
 
     @Async
     public void sendContactUsNotification(ContactUs contactUs) {
-        try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(contactNotificationEmail);
-            message.setSubject("New Contact Us Submission from " + contactUs.getFirstName() + " " + contactUs.getLastName());
-            message.setText(String.format(
-                    "You have received a new Contact Us submission:\n\n" +
-                    "Name: %s %s\n" +
-                    "Email: %s\n" +
-                    "Phone: %s\n" +
-                    "Heard about us via: %s\n\n" +
-                    "Message:\n%s\n",
-                    contactUs.getFirstName(),
-                    contactUs.getLastName(),
-                    contactUs.getEmailAddress() != null ? contactUs.getEmailAddress() : "Not provided",
-                    contactUs.getMobilePhoneNumber() != null ? contactUs.getMobilePhoneNumber() : "Not provided",
-                    contactUs.getWhereDidYouHearAboutUs() != null ? contactUs.getWhereDidYouHearAboutUs().name() : "Not specified",
-                    contactUs.getMessage() != null ? contactUs.getMessage() : "No message"
-            ));
+        String subject = "New Contact Us Submission from " + contactUs.getFirstName() + " " + contactUs.getLastName();
+        String body = String.format(
+                "You have received a new Contact Us submission:<br><br>" +
+                        "<b>Name:</b> %s %s<br>" +
+                        "<b>Email:</b> %s<br>" +
+                        "<b>Phone:</b> %s<br>" +
+                        "<b>Heard about us via:</b> %s<br><br>" +
+                        "<b>Message:</b><br>%s",
+                contactUs.getFirstName(),
+                contactUs.getLastName(),
+                contactUs.getEmailAddress() != null ? contactUs.getEmailAddress() : "Not provided",
+                contactUs.getMobilePhoneNumber() != null ? contactUs.getMobilePhoneNumber() : "Not provided",
+                contactUs.getWhereDidYouHearAboutUs() != null ? contactUs.getWhereDidYouHearAboutUs().name() : "Not specified",
+                contactUs.getMessage() != null ? contactUs.getMessage() : "No message"
+        );
 
-            if (contactUs.getEmailAddress() != null && !contactUs.getEmailAddress().isBlank()) {
-                message.setReplyTo(contactUs.getEmailAddress());
-            }
-
-            mailSender.send(message);
-            log.info("Contact Us notification sent to {} for submission from {} {}",
-                    contactNotificationEmail, contactUs.getFirstName(), contactUs.getLastName());
-        } catch (MailException e) {
-            log.error("Failed to send Contact Us notification for {} {}: {}",
-                    contactUs.getFirstName(), contactUs.getLastName(), e.getMessage());
-        }
+        send(contactNotificationEmail, subject, body);
     }
 
+    @Async
     public void sendRentReminder(Tenant tenant) {
         if (tenant.getEmail() == null || tenant.getEmail().isBlank()) {
             log.warn("Tenant {} {} has no email address, skipping email", tenant.getName(), tenant.getSurname());
             return;
         }
 
-        try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(tenant.getEmail());
-            message.setSubject("Rent Payment Reminder");
-            message.setText(String.format(
-                    "Dear %s %s, \n\nThis is a friendly reminder that your rent is due today (%s).\n" +
-                            "Room: %s (%s)\nMeter Number: %s\n\nThank you,\nTMS Management",
-                    tenant.getTitle() != null ? tenant.getTitle().getDisplayName() : "",
-                    tenant.getSurname(),
-                    tenant.getPaymentDay().getLabel(),
-                    tenant.getRoom() != null ? tenant.getRoom().getCode() : "N/A",
-                    tenant.getRoom() != null ? tenant.getRoom().getDescription() : "N/A",
-                    tenant.getRoom() != null ? tenant.getRoom().getPrepaidElectricityMeterNumber() : "N/A"
-            ));
+        String subject = "Rent Payment Reminder";
+        String body = String.format(
+                "Dear %s %s,<br><br>This is a friendly reminder that your rent is due today (%s).<br>" +
+                        "<b>Room:</b> %s (%s)<br>" +
+                        "<b>Meter Number:</b> %s<br><br>" +
+                        "Thank you,<br>TLT Properties Management",
+                tenant.getTitle() != null ? tenant.getTitle().getDisplayName() : "",
+                tenant.getSurname(),
+                tenant.getPaymentDay().getLabel(),
+                tenant.getRoom() != null ? tenant.getRoom().getCode() : "N/A",
+                tenant.getRoom() != null ? tenant.getRoom().getDescription() : "N/A",
+                tenant.getRoom() != null ? tenant.getRoom().getPrepaidElectricityMeterNumber() : "N/A"
+        );
 
-            mailSender.send(message);
-            log.info("Rent reminder email sent to {} ({})", tenant.getEmail(), tenant.getName());
-        } catch (MailException e) {
-            log.error("Failed to send rent reminder email to tenant {} {}: {}",
-                    tenant.getName(), tenant.getSurname(), e.getMessage());
-        }
+        send(tenant.getEmail(), subject, body);
     }
 
     @Async
     public void send(String to, String subject, String body) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(to);
-            message.setSubject(subject);
-            message.setText(body);
-            mailSender.send(message);
-            log.info("Email sent to {} - Subject: {}", to, subject);
-        } catch (MailException e) {
-            log.error("Failed to send email to {}: {}", to, e.getMessage());
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("api-key", brevoApiKey);
+
+            Map<String, Object> payload = Map.of(
+                    "sender", Map.of("name", senderName, "email", senderEmail),
+                    "to", List.of(Map.of("email", to)),
+                    "subject", subject,
+                    "htmlContent", body
+            );
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
+
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    "https://api.brevo.com/v3/smtp/email",
+                    request,
+                    String.class
+            );
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("Email sent successfully to {} - Subject: {}", to, subject);
+            } else {
+                log.error("Failed to send email to {}: {}", to, response.getBody());
+            }
+        } catch (Exception e) {
+            log.error("Oops! Failed to send email to {}: {}", to, e.getMessage());
         }
     }
-
 }
