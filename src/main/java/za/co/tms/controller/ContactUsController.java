@@ -1,6 +1,7 @@
 package za.co.tms.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import za.co.tms.domain.ContactUs;
 import za.co.tms.service.ContactUsService;
+import za.co.tms.service.EmailService;
 import za.co.tms.service.RecaptchaVerifierService;
+import za.co.tms.service.SmsService;
 
 @RestController
 @RequestMapping("/contact-us")
@@ -24,11 +27,15 @@ public class ContactUsController {
 
 	private final ContactUsService contactUsService;
 	private final RecaptchaVerifierService recaptchaVerifierService;
+	private final SmsService smsService;
+	private final EmailService emailService;
 	
 	@Autowired
-	public ContactUsController(ContactUsService contactUsService, RecaptchaVerifierService recaptchaVerifierService) {
+	public ContactUsController(ContactUsService contactUsService, RecaptchaVerifierService recaptchaVerifierService, SmsService smsService, EmailService emailService) {
 		this.contactUsService = contactUsService;
 		this.recaptchaVerifierService = recaptchaVerifierService;
+		this.smsService = smsService;
+		this.emailService = emailService;
 	}
 	
 	@GetMapping(path="/find/all")
@@ -93,4 +100,45 @@ public class ContactUsController {
 
 		return ResponseEntity.ok(contactUsService.addContactUs(contactUs));
 	}	
+
+	@PutMapping(path="/reply/{id}")
+public ResponseEntity<ContactUs> replyToContactUs(@PathVariable int id, @RequestBody Map<String, String> body) {
+    ContactUs contactUs = contactUsService.findContactUsById(id);
+
+    String replyMessage = body.get("resolution");
+    contactUs.setResolution(replyMessage);
+    contactUsService.updateContactUs(contactUs);
+
+    // Send email reply to the user
+    if (contactUs.getEmailAddress() != null && !contactUs.getEmailAddress().isBlank()) {
+        String subject = "RE: Your enquiry to TLT Properties";
+        String emailBody = String.format(
+                "Dear %s %s,<br><br>" +
+                "Thank you for reaching out to us. Here is our response to your enquiry:<br><br>" +
+                "<blockquote style=\"border-left: 3px solid #4b0082; padding-left: 10px; color: #333;\">%s</blockquote><br>" +
+                "If you have further questions, please don't hesitate to contact us.<br><br>" +
+                "Kind regards,<br>" +
+                "<b>TLT Properties</b><br>" +
+                "Phone: (+27) 81 208 6672<br>" +
+                "Website: <a href=\"https://www.tltproperties.co.za\">www.tltproperties.co.za</a>",
+                contactUs.getFirstName(),
+                contactUs.getLastName(),
+                replyMessage
+        );
+        emailService.send(contactUs.getEmailAddress(), subject, emailBody);
+    }
+
+    // Send SMS reply to the user
+    if (contactUs.getMobilePhoneNumber() != null && !contactUs.getMobilePhoneNumber().isBlank()) {
+        String smsMessage = String.format(
+                "Hi %s, TLT Properties has responded to your enquiry: %s. Visit www.tltproperties.co.za for more info.",
+                contactUs.getFirstName(),
+                replyMessage.length() > 100 ? replyMessage.substring(0, 100) + "..." : replyMessage
+        );
+        smsService.sendSms(contactUs.getMobilePhoneNumber(), smsMessage);
+    }
+
+    return ResponseEntity.ok(contactUs);
+}
+
 }

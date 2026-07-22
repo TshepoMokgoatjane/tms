@@ -54,4 +54,29 @@ public class SmsService {
             log.error("Failed to send SMS to tenant {} {}: {}", tenant.getName(), tenant.getSurname(), e.getMessage());
         }
     }
+
+    public void sendSms(String mobilePhoneNumber, String smsMessage) {
+        if (mobilePhoneNumber == null || mobilePhoneNumber.isBlank()) {
+            log.warn("No phone number provided, skipping SMS");
+            return;
+        }
+
+        try {
+            // Convert SA number format (0812086672 → +27812086672)
+            String formattedNumber = mobilePhoneNumber.startsWith("0")
+                    ? "+27" + mobilePhoneNumber.substring(1)
+                    : mobilePhoneNumber;
+
+            Message.creator(
+                    new PhoneNumber(formattedNumber),
+                    new PhoneNumber(fromNumber),
+                    smsMessage
+            ).create();
+
+            log.info("SMS sent successfully to {}", formattedNumber);
+        } catch (TwilioException e) {
+            log.error("Failed to send SMS to {}: {}", mobilePhoneNumber, e.getMessage());
+        }
+    }
+
 }
