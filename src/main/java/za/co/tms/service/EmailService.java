@@ -1,6 +1,7 @@
 package za.co.tms.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
@@ -8,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import za.co.tms.domain.ContactUs;
 import za.co.tms.domain.Tenant;
+import za.co.tms.domain.Ticket;
+import za.co.tms.repository.AppUserRepository;
 
 import java.util.List;
 import java.util.Map;
@@ -29,6 +32,12 @@ public class EmailService {
     private String contactNotificationEmail;
 
     private final RestTemplate restTemplate = new RestTemplate();
+    private final AppUserRepository appUserRepository;
+
+    @Autowired
+    public EmailService(AppUserRepository appUserRepository) {
+        this.appUserRepository = appUserRepository;
+    }
 
     @Async
     public void sendContactUsNotification(ContactUs contactUs) {
@@ -73,6 +82,88 @@ public class EmailService {
         );
 
         send(tenant.getEmail(), subject, body);
+    }
+
+    @Async
+    public void sendTicketCreatedNotification(Ticket ticket) {
+        try {
+            var appUser = appUserRepository.findByUsername(ticket.getRaisedBy());
+            if (appUser.isEmpty() || appUser.get().getEmail() == null || appUser.get().getEmail().isBlank()) {
+                log.warn("User {} has no email address, skipping ticket creation notification", ticket.getRaisedBy());
+                return;
+            }
+
+            String userEmail = appUser.get().getEmail();
+            String subject = String.format("Ticket #%d Created - %s", ticket.getTicketNumber(), ticket.getTitle());
+            String body = String.format(
+                    "Dear %s,<br><br>" +
+                    "Thank you for creating a support ticket. Your ticket has been successfully registered.<br><br>" +
+                    "<b>Ticket Details:</b><br>" +
+                    "<b>Ticket #:</b> %d<br>" +
+                    "<b>Title:</b> %s<br>" +
+                    "<b>Category:</b> %s<br>" +
+                    "<b>Priority:</b> %s<br>" +
+                    "<b>Status:</b> %s<br>" +
+                    "<b>Description:</b><br>%s<br><br>" +
+                    "We will get back to you as soon as possible.<br><br>" +
+                    "Kind regards,<br>" +
+                    "<b>TLT Properties Support Team</b>",
+                    appUser.get().getFirstName(),
+                    ticket.getTicketNumber(),
+                    ticket.getTitle(),
+                    ticket.getCategory() != null ? ticket.getCategory().name() : "N/A",
+                    ticket.getPriority() != null ? ticket.getPriority().name() : "N/A",
+                    ticket.getStatus() != null ? ticket.getStatus().name() : "OPEN",
+                    ticket.getDescription() != null ? ticket.getDescription() : "No description provided"
+            );
+
+            send(userEmail, subject, body);
+        } catch (Exception e) {
+            log.error("Failed to send ticket creation notification for ticket {}: {}", ticket.getId(), e.getMessage());
+        }
+    }
+
+    @Async
+    public void sendTicketStatusUpdateNotification(Ticket ticket, String previousStatus) {
+        try {
+            var appUser = appUserRepository.findByUsername(ticket.getRaisedBy());
+            if (appUser.isEmpty() || appUser.get().getEmail() == null || appUser.get().getEmail().isBlank()) {
+                log.warn("User {} has no email address, skipping ticket status update notification", ticket.getRaisedBy());
+                return;
+            }
+
+            String userEmail = appUser.get().getEmail();
+            String subject = String.format("Ticket #%d Status Update - %s", ticket.getTicketNumber(), ticket.getStatus().name());
+            String body = String.format(
+                    "Dear %s,<br><br>" +
+                    "Your support ticket has been updated.<br><br>" +
+                    "<b>Ticket Details:</b><br>" +
+                    "<b>Ticket #:</b> %d<br>" +
+                    "<b>Title:</b> %s<br>" +
+                    "<b>Previous Status:</b> %s<br>" +
+                    "<b>New Status:</b> %s<br>" +
+                    "<b>Category:</b> %s<br>" +
+                    "<b>Priority:</b> %s<br><br>" +
+                    "%s<br><br>" +
+                    "If you have any questions, please reply to this email or log into your account to add comments.<br><br>" +
+                    "Kind regards,<br>" +
+                    "<b>TLT Properties Support Team</b>",
+                    appUser.get().getFirstName(),
+                    ticket.getTicketNumber(),
+                    ticket.getTitle(),
+                    previousStatus != null ? previousStatus : "N/A",
+                    ticket.getStatus().name(),
+                    ticket.getCategory() != null ? ticket.getCategory().name() : "N/A",
+                    ticket.getPriority() != null ? ticket.getPriority().name() : "N/A",
+                    ticket.getStatus().name().equals("CLOSED") ? 
+                        "<b style='color: green;'>Your ticket has been closed. Thank you for using our support service!</b>" :
+                        "We continue to work on resolving your issue."
+            );
+
+            send(userEmail, subject, body);
+        } catch (Exception e) {
+            log.error("Failed to send ticket status update notification for ticket {}: {}", ticket.getId(), e.getMessage());
+        }
     }
 
     @Async

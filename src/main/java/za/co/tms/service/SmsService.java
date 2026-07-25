@@ -6,9 +6,12 @@ import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import za.co.tms.domain.Tenant;
+import za.co.tms.domain.Ticket;
+import za.co.tms.repository.AppUserRepository;
 
 @Slf4j
 @Service
@@ -22,6 +25,13 @@ public class SmsService {
 
     @Value("${twilio.phone.number}")
     private String fromNumber;
+
+    private final AppUserRepository appUserRepository;
+
+    @Autowired
+    public SmsService(AppUserRepository appUserRepository) {
+        this.appUserRepository = appUserRepository;
+    }
 
     @PostConstruct
     public void initTwilio() {
@@ -79,4 +89,52 @@ public class SmsService {
         }
     }
 
+    public void sendTicketCreatedSms(Ticket ticket) {
+        try {
+            var appUser = appUserRepository.findByUsername(ticket.getRaisedBy());
+            if (appUser.isEmpty() || appUser.get().getCellPhoneNumber() == null || appUser.get().getCellPhoneNumber().isBlank()) {
+                log.warn("User {} has no phone number, skipping ticket creation SMS", ticket.getRaisedBy());
+                return;
+            }
+
+            String phoneNumber = appUser.get().getCellPhoneNumber();
+            String smsMessage = String.format(
+                    "Hi %s, your ticket #%d (%s) has been created successfully. We will respond shortly. Status: %s. - TLT Properties",
+                    appUser.get().getFirstName(),
+                    ticket.getTicketNumber(),
+                    ticket.getTitle().length() > 20 ? ticket.getTitle().substring(0, 20) + "..." : ticket.getTitle(),
+                    ticket.getStatus() != null ? ticket.getStatus().name() : "OPEN"
+            );
+
+            sendSms(phoneNumber, smsMessage);
+        } catch (Exception e) {
+            log.error("Failed to send ticket creation SMS for ticket {}: {}", ticket.getId(), e.getMessage());
+        }
+    }
+
+    public void sendTicketStatusUpdateSms(Ticket ticket, String previousStatus) {
+        try {
+            var appUser = appUserRepository.findByUsername(ticket.getRaisedBy());
+            if (appUser.isEmpty() || appUser.get().getCellPhoneNumber() == null || appUser.get().getCellPhoneNumber().isBlank()) {
+                log.warn("User {} has no phone number, skipping ticket status update SMS", ticket.getRaisedBy());
+                return;
+            }
+
+            String phoneNumber = appUser.get().getCellPhoneNumber();
+            String statusMessage = ticket.getStatus().name().equals("CLOSED") ? 
+                    "Your ticket has been CLOSED. Thank you!" : 
+                    "Status updated to: " + ticket.getStatus().name();
+            
+            String smsMessage = String.format(
+                    "Hi %s, ticket #%d has been updated. %s - TLT Properties",
+                    appUser.get().getFirstName(),
+                    ticket.getTicketNumber(),
+                    statusMessage
+            );
+
+            sendSms(phoneNumber, smsMessage);
+        } catch (Exception e) {
+            log.error("Failed to send ticket status update SMS for ticket {}: {}", ticket.getId(), e.getMessage());
+        }
+    }
 }

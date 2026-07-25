@@ -16,19 +16,25 @@ import org.springframework.web.bind.annotation.RestController;
 
 import za.co.tms.domain.Ticket;
 import za.co.tms.repository.TicketRepository;
+import za.co.tms.service.EmailService;
+import za.co.tms.service.SmsService;
 import za.co.tms.service.TicketService;
 
 @RestController
 @RequestMapping("/tickets")
 public class TicketController {
 
-	private TicketService ticketService;
-	private TicketRepository ticketRepository;
+	private final TicketService ticketService;
+	private final TicketRepository ticketRepository;
+	private final EmailService emailService;
+	private final SmsService smsService;
 
 	@Autowired
-	public TicketController(TicketService ticketService, TicketRepository ticketRepository) {
+	public TicketController(TicketService ticketService, TicketRepository ticketRepository, EmailService emailService, SmsService smsService) {
 		this.ticketService = ticketService;
 		this.ticketRepository = ticketRepository;
+		this.emailService = emailService;
+		this.smsService = smsService;
 	}
 
 	@GetMapping(path="/find/all")
@@ -54,7 +60,8 @@ public class TicketController {
 	}
 
 	@PutMapping(path="/update/{id}")
-	public Ticket updateHelpdeskTicket(@PathVariable int id, @RequestBody Ticket helpDeskTicket) {
+	public Ticket updateHelpdeskTicket(@PathVariable Long id, @RequestBody Ticket helpDeskTicket) {
+		helpDeskTicket.setId(id);
 		ticketService.updateHelpdeskTicket(helpDeskTicket);
 		return helpDeskTicket;
 	}
