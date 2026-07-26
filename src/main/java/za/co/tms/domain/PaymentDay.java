@@ -35,6 +35,21 @@ public enum PaymentDay {
     }
 
     public String getLabel() {
-        return this == LAST_DAY ? "Last Day" : String.valueOf(day);
+        if (this == LAST_DAY) {
+            return "last day of the month";
+        }
+        return getOrdinalSuffix(day);
+    }
+
+    private static String getOrdinalSuffix(int day) {
+        if (day >= 11 && day <= 13) {
+            return day + "th";
+        }
+        return switch (day % 10) {
+            case 1 -> day + "st";
+            case 2 -> day + "nd";
+            case 3 -> day + "rd";
+            default -> day + "th";
+        };
     }
 }
