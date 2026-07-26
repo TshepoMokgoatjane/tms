@@ -14,7 +14,9 @@ import za.co.tms.domain.*;
 import za.co.tms.repository.PaymentRepository;
 import za.co.tms.repository.TenantRepository;
 import za.co.tms.service.AppUserService;
+import za.co.tms.service.EmailService;
 import za.co.tms.service.PaymentService;
+import za.co.tms.service.SmsService;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -28,13 +30,17 @@ public class PaymentController {
     private final PaymentRepository paymentRepository;
     private final PaymentService paymentService;
     private final AppUserService appUserService;
+    private final EmailService emailService;
+    private final SmsService smsService;
 
     @Autowired
-    public PaymentController(PaymentRepository paymentRepository, TenantRepository tenantRepository, PaymentService paymentService, AppUserService appUserService) {
+    public PaymentController(PaymentRepository paymentRepository, TenantRepository tenantRepository, PaymentService paymentService, AppUserService appUserService, EmailService emailService, SmsService smsService) {
         this.paymentRepository = paymentRepository;
         this.tenantRepository = tenantRepository;
         this.paymentService = paymentService;
         this.appUserService = appUserService;
+        this.emailService = emailService;
+        this.smsService = smsService;
     }
 
     @GetMapping("/all")
@@ -120,6 +126,17 @@ public class PaymentController {
         payment.setPaymentStatus(PaymentStatus.PAID);
         Payment updatedPayment = paymentRepository.save(payment);
         log.info("Payment [{}] marked as PAID successfully.", paymentId);
+
+        // Send payment received notifications
+        Tenant tenant = payment.getTenant();
+        try {
+            emailService.sendPaymentReceivedNotification(tenant);
+            smsService.sendPaymentReceivedSms(tenant);
+            log.info("Payment received notifications sent to tenant {} {}", tenant.getName(), tenant.getSurname());
+        } catch (Exception e) {
+            log.error("Failed to send payment received notifications for payment {}: {}", paymentId, e.getMessage());
+        }
+
         return ResponseEntity.ok(updatedPayment);
     }
 

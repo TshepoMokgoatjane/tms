@@ -167,6 +167,35 @@ public class EmailService {
     }
 
     @Async
+    public void sendPaymentReceivedNotification(Tenant tenant) {
+        if (tenant.getEmail() == null || tenant.getEmail().isBlank()) {
+            log.warn("Tenant {} {} has no email address, skipping payment received notification", tenant.getName(), tenant.getSurname());
+            return;
+        }
+
+        String subject = "Payment Received - Thank You";
+        String body = String.format(
+                "Dear %s %s,<br><br>" +
+                "<b style='color: green; font-size: 16px;'>We have received your payment. Thank you!</b><br><br>" +
+                "<b>Payment Details:</b><br>" +
+                "<b>Room:</b> %s (%s)<br>" +
+                "<b>Amount:</b> R%.2f<br>" +
+                "<b>Status:</b> PAID<br><br>" +
+                "We truly appreciate your prompt payment and your valued business.<br><br>" +
+                "If you have any questions about your account, please don't hesitate to contact us.<br><br>" +
+                "Kind regards,<br>" +
+                "<b>TLT Properties Management</b>",
+                tenant.getTitle() != null ? tenant.getTitle().getDisplayName() : "",
+                tenant.getSurname(),
+                tenant.getRoom() != null ? tenant.getRoom().getCode() : "N/A",
+                tenant.getRoom() != null ? tenant.getRoom().getDescription() : "N/A",
+                tenant.getRentalAmount() != null ? tenant.getRentalAmount().doubleValue() : 0.0
+        );
+
+        send(tenant.getEmail(), subject, body);
+    }
+
+    @Async
     public void send(String to, String subject, String body) {
         try {
             HttpHeaders headers = new HttpHeaders();

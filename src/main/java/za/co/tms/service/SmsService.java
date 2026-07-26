@@ -65,6 +65,30 @@ public class SmsService {
         }
     }
 
+    public void sendPaymentReceivedSms(Tenant tenant) {
+        if (tenant.getCellPhoneNumber() == null || tenant.getCellPhoneNumber().isBlank()) {
+            log.warn("Tenant {} {} has no phone number, skipping payment received SMS", tenant.getName(), tenant.getSurname());
+            return;
+        }
+
+        try {
+            String messageBody = String.format("Hi %s %s, we have received your payment. Thank you for your business! - TLTProperties",
+                    tenant.getTitle() != null ? tenant.getTitle().getDisplayName() : "",
+                    tenant.getSurname()
+            );
+
+            Message.creator(
+                    new PhoneNumber(tenant.getCellPhoneNumber()),
+                    new PhoneNumber(fromNumber),
+                    messageBody
+            ).create();
+
+            log.info("Payment received SMS sent successfully to tenant {} {}", tenant.getName(), tenant.getSurname());
+        } catch (TwilioException e) {
+            log.error("Failed to send payment received SMS to tenant {} {}: {}", tenant.getName(), tenant.getSurname(), e.getMessage());
+        }
+    }
+
     public void sendSms(String mobilePhoneNumber, String smsMessage) {
         if (mobilePhoneNumber == null || mobilePhoneNumber.isBlank()) {
             log.warn("No phone number provided, skipping SMS");
