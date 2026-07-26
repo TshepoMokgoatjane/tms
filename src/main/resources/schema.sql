@@ -20,3 +20,27 @@ CREATE TABLE tenant (
     created_at TIMESTAMP,
     updated_at TIMESTAMP
 );
+
+CREATE TABLE ticket (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ticket_number INT,
+    raised_by VARCHAR(255),
+    date_raised DATETIME,
+    title VARCHAR(255),
+    description TEXT,
+    comments TEXT,
+    category VARCHAR(50),
+    priority VARCHAR(50),
+    status VARCHAR(50)
+);
+
+CREATE TABLE ticket_comment (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ticket_id BIGINT NOT NULL,
+    comment TEXT NOT NULL,
+    author VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    FOREIGN KEY (ticket_id) REFERENCES ticket(id)
+);
