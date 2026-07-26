@@ -37,6 +37,7 @@ public class TenantResponseDTO {
     private String paymentDayLabel;
     private String tenantBehaviour;
     private String tenantStatus;
+    private String dateOfBirth;
 
     public TenantResponseDTO(Tenant tenant) {
         this.id = tenant.getId();
@@ -63,6 +64,7 @@ public class TenantResponseDTO {
 
         this.tenantBehaviour = tenant.getTenantBehaviour() != null ? tenant.getTenantBehaviour().name() : null;
         this.tenantStatus = tenant.getTenantStatus() != null ? tenant.getTenantStatus().name() : null;
+        this.dateOfBirth = tenant.getDateOfBirth() != null ? tenant.getDateOfBirth().toString() : null;
     }
 
 }

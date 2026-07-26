@@ -144,6 +144,7 @@ public class TenantService {
         existingTenant.setRentalAmount(updatedTenant.getRentalAmount());
         existingTenant.setTenantBehaviour(updatedTenant.getTenantBehaviour());
         existingTenant.setTenantStatus(updatedTenant.getTenantStatus());
+        existingTenant.setDateOfBirth(updatedTenant.getDateOfBirth());
 
         return tenantRepository.save(existingTenant);
 	}

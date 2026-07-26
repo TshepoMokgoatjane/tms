@@ -196,6 +196,37 @@ public class EmailService {
     }
 
     @Async
+    public void sendBirthdayNotification(Tenant tenant) {
+        if (tenant.getEmail() == null || tenant.getEmail().isBlank()) {
+            log.warn("Tenant {} {} has no email address, skipping birthday notification", tenant.getName(), tenant.getSurname());
+            return;
+        }
+
+        String subject = "🎂 Happy Birthday from TLT Properties!";
+        String body = String.format(
+                "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>" +
+                "<div style='background: linear-gradient(135deg, #6b46c1, #9f67fa); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;'>" +
+                "<h1 style='color: white; margin: 0; font-size: 2rem;'>🎂 Happy Birthday!</h1>" +
+                "</div>" +
+                "<div style='background: white; padding: 30px; border: 1px solid #e5e7eb; border-radius: 0 0 10px 10px;'>" +
+                "<p style='font-size: 1.1rem;'>Dear %s %s,</p>" +
+                "<p>Wishing you a wonderful birthday filled with joy and happiness! 🎉</p>" +
+                "<p>On this special day, we want to take a moment to express our heartfelt appreciation for being such a valued tenant. It is truly a pleasure having you as part of our TLT Properties family.</p>" +
+                "<p style='font-size: 1.2rem; color: #6b46c1; font-weight: bold; text-align: center;'>May this year bring you good health, happiness, and success in all that you do! 🥳</p>" +
+                "<br>" +
+                "<p>Warm regards,</p>" +
+                "<p><b>TLT Properties Management</b></p>" +
+                "</div>" +
+                "</div>",
+                tenant.getTitle() != null ? tenant.getTitle().getDisplayName() : "",
+                tenant.getSurname()
+        );
+
+        send(tenant.getEmail(), subject, body);
+        log.info("Birthday email sent to tenant {} {}", tenant.getName(), tenant.getSurname());
+    }
+
+    @Async
     public void send(String to, String subject, String body) {
         try {
             HttpHeaders headers = new HttpHeaders();

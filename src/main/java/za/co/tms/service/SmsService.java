@@ -161,4 +161,24 @@ public class SmsService {
             log.error("Failed to send ticket status update SMS for ticket {}: {}", ticket.getId(), e.getMessage());
         }
     }
+
+    public void sendBirthdaySms(Tenant tenant) {
+        if (tenant.getCellPhoneNumber() == null || tenant.getCellPhoneNumber().isBlank()) {
+            log.warn("Tenant {} {} has no phone number, skipping birthday SMS", tenant.getName(), tenant.getSurname());
+            return;
+        }
+
+        try {
+            String messageBody = String.format(
+                    "Happy Birthday %s %s! 🎂 Wishing you a wonderful day. Thank you for being a valued tenant - TLTProperties",
+                    tenant.getTitle() != null ? tenant.getTitle().getDisplayName() : "",
+                    tenant.getSurname()
+            );
+
+            sendSms(tenant.getCellPhoneNumber(), messageBody);
+            log.info("Birthday SMS sent to tenant {} {}", tenant.getName(), tenant.getSurname());
+        } catch (Exception e) {
+            log.error("Failed to send birthday SMS to tenant {} {}: {}", tenant.getName(), tenant.getSurname(), e.getMessage());
+        }
+    }
 }

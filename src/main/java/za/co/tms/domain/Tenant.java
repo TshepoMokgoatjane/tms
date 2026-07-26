@@ -98,4 +98,7 @@ public class Tenant extends AuditModel implements Serializable {
     @Enumerated(EnumType.STRING)
     @Schema(description = "Tenant's current status", example = "ACTIVE")
     private TenantStatus tenantStatus;
+
+    @Schema(description = "Tenant's date of birth", example = "1990-05-15")
+    private LocalDate dateOfBirth;
 }
