@@ -41,6 +41,12 @@ public class SettingsController {
     @Value("${spring.mail.username:not-configured}")
     private String emailUsername;
 
+    @Value("${brevo.api.key:no-key}")
+    private String brevoApiKey;
+
+    @Value("${brevo.sender.email:not-configured}")
+    private String brevoSenderEmail;
+
     @Value("${twilio.account.sid:no-sid}")
     private String twilioSid;
 
@@ -100,10 +106,10 @@ public class SettingsController {
         dto.setLastSchedulerRun("Runs daily at 08:00 AM");
 
         // Notification Preferences
-        dto.setEmailProvider("Gmail SMTP");
-        dto.setEmailHost(emailHost);
-        dto.setEmailPort(emailPort);
-        dto.setEmailConfigured(!emailUsername.equals("noreply@localhost") && !emailUsername.equals("not-configured"));
+        dto.setEmailProvider("Brevo");
+        dto.setEmailHost("api.brevo.com");
+        dto.setEmailPort(443);
+        dto.setEmailConfigured(!brevoApiKey.equals("no-key") && !brevoSenderEmail.equals("not-configured"));
         dto.setSmsProvider("Twilio");
         dto.setSmsConfigured(!twilioSid.equals("no-sid"));
         dto.setContactNotificationEmail(contactNotificationEmail);
