@@ -52,6 +52,7 @@ public class JwtSecurityConfig {
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 // Role-based access
+                .requestMatchers("/auth/user/profile/avatar/**").permitAll()
                 .requestMatchers("/auth/user/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER", "ROLE_TENANT", "ROLE_CARETAKER")
                 .requestMatchers("/auth/admin/**").hasAuthority("ROLE_ADMIN")
                 .anyRequest().authenticated()
