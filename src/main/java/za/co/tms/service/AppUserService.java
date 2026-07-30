@@ -114,4 +114,13 @@ public class AppUserService implements UserDetailsService {
         user.setDateModified(LocalDateTime.now());
         return appUserRepository.save(user);
     }
+
+    public void updateProfileImage(String username, byte[] imageData, String contentType) {
+        AppUser user = findByUsername(username);
+        user.setProfileImage(imageData);
+        user.setProfileImageType(contentType);
+        user.setDateModified(LocalDateTime.now());
+        appUserRepository.save(user);
+        log.info("Profile image updated for user {}", username);
+    }
 }

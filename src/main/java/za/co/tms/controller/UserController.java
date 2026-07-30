@@ -3,6 +3,7 @@ package za.co.tms.controller;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -11,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import za.co.tms.domain.AppUser;
 import za.co.tms.domain.UserRoles;
@@ -130,5 +132,46 @@ public class UserController {
     @GetMapping("/welcome")
     public String welcome() {
         return "Welcome to the public endpoint!";
+    }
+
+    @PostMapping("/user/profile/avatar")
+    public ResponseEntity<String> uploadAvatar(Authentication authentication,
+                                               @RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("No file provided");
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            return ResponseEntity.badRequest().body("Only image files are allowed");
+        }
+
+        if (file.getSize() > 5 * 1024 * 1024) { // 5MB limit
+            return ResponseEntity.badRequest().body("File size must be under 5MB");
+        }
+
+        String username = authentication != null
+                ? authentication.getName()
+                : SecurityContextHolder.getContext().getAuthentication().getName();
+
+        try {
+            appUserService.updateProfileImage(username, file.getBytes(), contentType);
+            return ResponseEntity.ok("Avatar uploaded successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload avatar");
+        }
+    }
+
+    @GetMapping("/user/profile/avatar/{username}")
+    public ResponseEntity<byte[]> getAvatar(@PathVariable String username) {
+        AppUser user = appUserService.findByUsername(username);
+
+        if (user.getProfileImage() == null || user.getProfileImage().length == 0) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(user.getProfileImageType() != null ? user.getProfileImageType() : "image/jpeg"))
+                .body(user.getProfileImage());
     }
 }

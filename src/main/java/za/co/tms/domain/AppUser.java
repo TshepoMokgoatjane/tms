@@ -66,4 +66,12 @@ public class AppUser {
     @OneToOne
     @JoinColumn(name = "tenant_id", referencedColumnName = "id")
     private Tenant tenant;
+
+    // Profile avatar image
+    @Lob
+    @Column(columnDefinition = "LONGBLOB")
+    private byte[] profileImage;
+
+    @Column
+    private String profileImageType; // e.g., "image/jpeg", "image/png"
 }
