@@ -167,7 +167,8 @@ public class UserController {
         AppUser user = appUserService.findByUsername(username);
 
         if (user.getProfileImage() == null || user.getProfileImage().length == 0) {
-            return ResponseEntity.notFound().build();
+            // Return 204 No Content instead of 404 to prevent browser console errors
+            return ResponseEntity.noContent().build();
         }
 
         return ResponseEntity.ok()
