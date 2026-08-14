@@ -28,45 +28,40 @@ public class GateRemoteService {
     }
 
     public GateRemote findGateRemoteById(Long id) {
-
         LOGGER.info("Finding Gate Remote with id {}", id);
+        return gateRemoteRepository.findById(id)
+                .orElseThrow(() -> new GateRemoteNotFoundException("Gate Remote with id '" + id + "' was not found!"));
+    }
 
-        return gateRemoteRepository.findById(id).orElseThrow(() -> new GateRemoteNotFoundException("Gate Remote with id '" + id + "' was not found!"));
+    public List<GateRemote> findByTenantId(Integer tenantId) {
+        LOGGER.info("Finding Gate Remotes for tenant ID {}", tenantId);
+        return gateRemoteRepository.findByIssuedToTenantId(tenantId);
     }
 
     public GateRemote addGateRemote(GateRemote gateRemote) {
-
-        LOGGER.info("Register a new gate remote");
-
-        gateRemote.setId(null); // Ensures it is a new gate remote
-
+        LOGGER.info("Register a new gate remote: {}", gateRemote.getSerialNumber());
+        gateRemote.setId(null);
         return gateRemoteRepository.save(gateRemote);
     }
 
     public void deleteGateRemote(Long id) {
-
-        LOGGER.info("Delete Gate Remote with id {}", id);
-
+        LOGGER.info("Soft-delete Gate Remote with id {}", id);
         GateRemote gateRemote = findGateRemoteById(id);
         gateRemote.setGateRemoteStatus(GateRemoteStatus.INACTIVE);
-
         gateRemoteRepository.save(gateRemote);
     }
 
     public GateRemote updateGateRemote(GateRemote gateRemote, Long id) {
-
         LOGGER.info("Update Gate Remote with id {}", id);
+        GateRemote existing = findGateRemoteById(id);
 
-        GateRemote existingGateRemote = findGateRemoteById(id);
+        existing.setSerialNumber(gateRemote.getSerialNumber());
+        existing.setBrand(gateRemote.getBrand());
+        existing.setGateRemoteStatus(gateRemote.getGateRemoteStatus());
+        existing.setIssuedToTenant(gateRemote.getIssuedToTenant());
+        existing.setIssuedDate(gateRemote.getIssuedDate());
+        existing.setReturnedDate(gateRemote.getReturnedDate());
 
-        existingGateRemote.setSerialNumber(gateRemote.getSerialNumber());
-        existingGateRemote.setRoom(gateRemote.getRoom());
-        existingGateRemote.setBrand(gateRemote.getBrand());
-        existingGateRemote.setGateRemoteStatus(gateRemote.getGateRemoteStatus());
-        existingGateRemote.setIssuedToTenant(gateRemote.getIssuedToTenant());
-        existingGateRemote.setIssuedDate(gateRemote.getIssuedDate());
-        existingGateRemote.setReturnedDate(gateRemote.getReturnedDate());
-
-        return gateRemoteRepository.save(existingGateRemote);
+        return gateRemoteRepository.save(existing);
     }
 }

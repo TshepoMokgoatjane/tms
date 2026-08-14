@@ -36,12 +36,7 @@ public class GateRemote extends AuditModel implements Serializable {
     private String brand;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "room_id", nullable = false)
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-    private Room room;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "issued_to_tenant_id")
+    @JoinColumn(name = "issued_to_tenant_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Tenant issuedToTenant;
 
