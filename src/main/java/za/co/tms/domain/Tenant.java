@@ -79,11 +79,6 @@ public class Tenant extends AuditModel implements Serializable {
     @Schema(description = "Indicates if deposit has been paid", example = "true")
     private boolean depositPaid;
 
-    @Column(precision = 10, scale = 2)
-    @DecimalMin(value = "0.0", inclusive = true, message = "Rental must be zero or positive")
-    @Schema(description = "Monthly rental amount", example = "6000.00")
-    private BigDecimal rentalAmount;
-
     @NotNull
     @Enumerated(EnumType.STRING)
     @Schema(description = "Date of rent payment", example = "25th")
@@ -101,4 +96,14 @@ public class Tenant extends AuditModel implements Serializable {
 
     @Schema(description = "Tenant's date of birth", example = "1990-05-15")
     private LocalDate dateOfBirth;
+
+    /**
+     * Derives the rental amount from the assigned room.
+     * The room is the single source of truth for rental pricing.
+     */
+    @Transient
+    @Schema(description = "Monthly rental amount (derived from room)", example = "6000.00")
+    public BigDecimal getRentalAmount() {
+        return room != null ? room.getRentalAmount() : BigDecimal.ZERO;
+    }
 }

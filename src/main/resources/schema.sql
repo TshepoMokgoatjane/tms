@@ -13,7 +13,6 @@ CREATE TABLE tenant (
     lease_end_date DATE,
     prepaid_electricity_meter_number VARCHAR(50),
     deposit_paid BOOLEAN,
-    rental DECIMAL(10,2),
     payment_day VARCHAR(20) NOT NULL,
     tenant_behaviour VARCHAR(20) NOT NULL,
     tenant_status VARCHAR(20) NOT NULL,
