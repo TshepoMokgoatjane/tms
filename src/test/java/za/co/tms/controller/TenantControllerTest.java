@@ -107,7 +107,6 @@ public class TenantControllerTest {
         tenant.setTenantStatus(TenantStatus.ACTIVE);
         tenant.setLeaseStartDate(LocalDate.now());
         tenant.setLeaseEndDate(LocalDate.now().plusDays(30));
-        tenant.setRentalAmount(BigDecimal.valueOf(5000));
         tenant.setTenantBehaviour(TenantBehaviour.GOOD);
 
         // When
@@ -128,7 +127,6 @@ public class TenantControllerTest {
         tenant.setTenantStatus(TenantStatus.ACTIVE);
         tenant.setLeaseStartDate(LocalDate.now());
         tenant.setLeaseEndDate(LocalDate.now().plusDays(30));
-        tenant.setRentalAmount(BigDecimal.valueOf(5000));
 
         mockMvc.perform(post(CREATE)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -146,7 +144,6 @@ public class TenantControllerTest {
         tenant.setTenantStatus(TenantStatus.ACTIVE);
         tenant.setLeaseStartDate(LocalDate.now());
         tenant.setLeaseEndDate(LocalDate.now().plusDays(30));
-        tenant.setRentalAmount(BigDecimal.valueOf(5000));
 
         mockMvc.perform(post(CREATE)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -163,31 +160,12 @@ public class TenantControllerTest {
         tenant.setTenantStatus(TenantStatus.ACTIVE);
         tenant.setLeaseStartDate(LocalDate.now());
         tenant.setLeaseEndDate(LocalDate.now().minusDays(1)); // Invalid
-        tenant.setRentalAmount(BigDecimal.valueOf(5000));
 
         mockMvc.perform(post(CREATE)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(tenant)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors").exists());
-    }
-
-    @Test
-    void shouldReturn400WhenRentalIsNegative() throws Exception {
-        Tenant tenant = new Tenant();
-        tenant.setName(TENANT_NAME);;
-        tenant.setSurname(TENANT_SURNAME);
-        tenant.setTenantStatus(TenantStatus.ACTIVE);
-        tenant.setLeaseStartDate(LocalDate.now());
-        tenant.setLeaseEndDate(LocalDate.now().plusDays(30));
-        tenant.setRentalAmount(BigDecimal.valueOf(-1000));    // Invalid rental
-
-        mockMvc.perform(post(CREATE)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(tenant)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value("VALIDATION_FAILED"))
-                .andExpect(jsonPath("$.errors.rentalAmount").value("Rental must be zero or positive"));
     }
 
     @Test
@@ -212,13 +190,17 @@ public class TenantControllerTest {
         // Get
         int tenantId = 1;
 
+        Room room = new Room();
+        room.setId(1L);
+        room.setRentalAmount(BigDecimal.valueOf(6000));
+
         Tenant updateTenant = new Tenant();
         updateTenant.setName("Updated");
         updateTenant.setSurname("Tenant");
         updateTenant.setTenantStatus(TenantStatus.ACTIVE);
         updateTenant.setLeaseStartDate(LocalDate.now());
         updateTenant.setLeaseEndDate(LocalDate.now().plusDays(30));
-        updateTenant.setRentalAmount(BigDecimal.valueOf(6000));
+        updateTenant.setRoom(room);
 
         // When
         when(tenantService.updateTenant(Mockito.eq(tenantId), any(Tenant.class)))

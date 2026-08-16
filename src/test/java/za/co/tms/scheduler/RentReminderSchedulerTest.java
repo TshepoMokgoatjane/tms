@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import za.co.tms.domain.Payment;
 import za.co.tms.domain.PaymentDay;
+import za.co.tms.domain.Room;
 import za.co.tms.domain.Tenant;
 import za.co.tms.repository.PaymentRepository;
 import za.co.tms.service.EmailService;
@@ -44,11 +45,14 @@ public class RentReminderSchedulerTest {
 
     @Test
     public void testPaymentCreatedWhenNoneExists() {
+        Room room = new Room();
+        room.setRentalAmount(BigDecimal.valueOf(5000));
+
         Tenant tenant = new Tenant();
         tenant.setId(1);
         tenant.setName("John");
         tenant.setSurname("Doe");
-        tenant.setRentalAmount(BigDecimal.valueOf(5000));
+        tenant.setRoom(room);
         tenant.setPaymentDay(PaymentDay.DAY_7); // Assuming today is the 8th
 
         when(tenantService.findAllTenants()).thenReturn(Collections.singletonList(tenant));
@@ -62,11 +66,14 @@ public class RentReminderSchedulerTest {
 
     @Test
     public void testPaymentNotCreatedWhenExists() {
+        Room room = new Room();
+        room.setRentalAmount(BigDecimal.valueOf(5000));
+
         Tenant tenant = new Tenant();
         tenant.setId(1);
         tenant.setName("John");
         tenant.setSurname("Doe");
-        tenant.setRentalAmount(BigDecimal.valueOf(5000));
+        tenant.setRoom(room);
         tenant.setPaymentDay(PaymentDay.DAY_7); // Assuming today is the 8th
 
         when(tenantService.findAllTenants()).thenReturn(Collections.singletonList(tenant));

@@ -6,6 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import za.co.tms.exception.TenantNotFoundException;
+import za.co.tms.domain.Room;
 import za.co.tms.domain.Tenant;
 import za.co.tms.domain.TenantStatus;
 import za.co.tms.repository.TenantRepository;
@@ -118,7 +119,10 @@ public class TenantServiceTest {
         updatedTenant.setName("New Name");
         updatedTenant.setSurname("Tenant");
         updatedTenant.setTenantStatus(TenantStatus.ACTIVE);
-        updatedTenant.setRentalAmount(BigDecimal.valueOf(6000));
+
+        Room room = new Room();
+        room.setRentalAmount(BigDecimal.valueOf(6000));
+        updatedTenant.setRoom(room);
 
         when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(exisitngTenant));
 
