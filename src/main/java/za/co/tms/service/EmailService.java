@@ -72,6 +72,7 @@ public class EmailService {
                 "Dear %s %s,<br><br>This is a friendly reminder that your rent is due today (%s).<br>" +
                         "<b>Room:</b> %s (%s)<br>" +
                         "<b>Meter Number:</b> %s<br><br>" +
+                        "<i>If you have already made your payment, please ignore this reminder.</i><br><br>" +
                         "Thank you,<br>TLT Properties Management",
                 tenant.getTitle() != null ? tenant.getTitle().getDisplayName() : "",
                 tenant.getSurname(),
@@ -94,13 +95,13 @@ public class EmailService {
             }
 
             String userEmail = appUser.get().getEmail();
-            String subject = String.format("Ticket #%d Created - %s", ticket.getTicketNumber(), ticket.getTitle());
+            String subject = String.format("Ticket #%d Created - %s", ticket.getTicketNumber(), ticket.getSubject());
             String body = String.format(
                     "Dear %s,<br><br>" +
                     "Thank you for creating a support ticket. Your ticket has been successfully registered.<br><br>" +
                     "<b>Ticket Details:</b><br>" +
                     "<b>Ticket #:</b> %d<br>" +
-                    "<b>Title:</b> %s<br>" +
+                    "<b>Subject:</b> %s<br>" +
                     "<b>Category:</b> %s<br>" +
                     "<b>Priority:</b> %s<br>" +
                     "<b>Status:</b> %s<br>" +
@@ -110,7 +111,7 @@ public class EmailService {
                     "<b>TLT Properties Support Team</b>",
                     appUser.get().getFirstName(),
                     ticket.getTicketNumber(),
-                    ticket.getTitle(),
+                    ticket.getSubject(),
                     ticket.getCategory() != null ? ticket.getCategory().name() : "N/A",
                     ticket.getPriority() != null ? ticket.getPriority().name() : "N/A",
                     ticket.getStatus() != null ? ticket.getStatus().name() : "OPEN",
@@ -139,7 +140,7 @@ public class EmailService {
                     "Your support ticket has been updated.<br><br>" +
                     "<b>Ticket Details:</b><br>" +
                     "<b>Ticket #:</b> %d<br>" +
-                    "<b>Title:</b> %s<br>" +
+                    "<b>Subject:</b> %s<br>" +
                     "<b>Previous Status:</b> %s<br>" +
                     "<b>New Status:</b> %s<br>" +
                     "<b>Category:</b> %s<br>" +
@@ -150,7 +151,7 @@ public class EmailService {
                     "<b>TLT Properties Support Team</b>",
                     appUser.get().getFirstName(),
                     ticket.getTicketNumber(),
-                    ticket.getTitle(),
+                    ticket.getSubject(),
                     previousStatus != null ? previousStatus : "N/A",
                     ticket.getStatus().name(),
                     ticket.getCategory() != null ? ticket.getCategory().name() : "N/A",

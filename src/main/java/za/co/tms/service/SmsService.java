@@ -46,7 +46,7 @@ public class SmsService {
         }
 
         try {
-            String messageBody = String.format("Hi %s %s, your rent is due today (%s). Room: %s. Thank you - TLTProperties",
+            String messageBody = String.format("Hi %s %s, your rent is due today (%s). Room: %s. Please ignore if already paid. Thank you - TLTProperties",
                     tenant.getTitle() != null ? tenant.getTitle().getDisplayName() : "",
                     tenant.getSurname(),
                     tenant.getPaymentDay().getLabel(),
@@ -126,7 +126,7 @@ public class SmsService {
                     "Hi %s, your ticket #%d (%s) has been created successfully. We will respond shortly. Status: %s. - TLT Properties",
                     appUser.get().getFirstName(),
                     ticket.getTicketNumber(),
-                    ticket.getTitle().length() > 20 ? ticket.getTitle().substring(0, 20) + "..." : ticket.getTitle(),
+                    ticket.getSubject().length() > 20 ? ticket.getSubject().substring(0, 20) + "..." : ticket.getSubject(),
                     ticket.getStatus() != null ? ticket.getStatus().name() : "OPEN"
             );
 

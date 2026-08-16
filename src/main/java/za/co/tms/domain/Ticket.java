@@ -35,7 +35,7 @@ public class Ticket implements Serializable {
 	private Integer ticketNumber;	
 	private String raisedBy;	
 	private LocalDateTime dateRaised;	
-	private String title;	
+	private String subject;	
 	private String description;	
 	private String comments;	
 	private Category category;	

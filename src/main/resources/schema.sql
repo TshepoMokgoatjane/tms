@@ -26,7 +26,7 @@ CREATE TABLE ticket (
     ticket_number INT,
     raised_by VARCHAR(255),
     date_raised DATETIME,
-    title VARCHAR(255),
+    subject VARCHAR(255),
     description TEXT,
     comments TEXT,
     category VARCHAR(50),
