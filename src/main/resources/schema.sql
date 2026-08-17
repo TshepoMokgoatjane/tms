@@ -43,3 +43,26 @@ CREATE TABLE ticket_comment (
     updated_at TIMESTAMP,
     FOREIGN KEY (ticket_id) REFERENCES ticket(id)
 );
+
+CREATE TABLE house_rules (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    version INT NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_data LONGBLOB NOT NULL,
+    content_type VARCHAR(100) NOT NULL,
+    uploaded_by VARCHAR(255),
+    uploaded_at DATETIME NOT NULL,
+    description TEXT,
+    active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE TABLE house_rules_acknowledgement (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    tenant_id INT NOT NULL,
+    house_rules_id BIGINT NOT NULL,
+    acknowledged_at DATETIME NOT NULL,
+    ip_address VARCHAR(45),
+    FOREIGN KEY (tenant_id) REFERENCES tenant(id),
+    FOREIGN KEY (house_rules_id) REFERENCES house_rules(id),
+    UNIQUE KEY uk_tenant_house_rules (tenant_id, house_rules_id)
+);
