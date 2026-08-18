@@ -123,4 +123,8 @@ public class AppUserService implements UserDetailsService {
         appUserRepository.save(user);
         log.info("Profile image updated for user {}", username);
     }
+
+    public List<AppUser> findUnlinkedUsers() {
+        return appUserRepository.findByRoleAndTenantIsNull(UserRoles.USER);
+    }
 }

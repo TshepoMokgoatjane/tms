@@ -63,7 +63,8 @@ public class AppUser {
     private LocalDateTime dateModified;
 
     // Link to tenant record (nullable — admins won't have a tenant record)
-    @OneToOne
+    // ManyToOne allows multiple users (primary tenant + co-occupants) to share the same tenant record
+    @ManyToOne
     @JoinColumn(name = "tenant_id", referencedColumnName = "id")
     private Tenant tenant;
 

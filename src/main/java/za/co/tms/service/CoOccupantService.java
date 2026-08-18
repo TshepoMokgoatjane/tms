@@ -20,15 +20,21 @@ public class CoOccupantService {
     private final AppUserService appUserService;
 
     /**
-     * Create a co-occupant and their login account.
-     * The admin provides co-occupant details + a temporary password.
-     * The co-occupant gets linked to the primary tenant's record.
+     * Link an existing registered user as a co-occupant to a primary tenant.
+     * Updates the user's role to CO_OCCUPANT and links them to the tenant.
      */
     @Transactional
-    public CoOccupant addCoOccupant(CoOccupant coOccupant, Integer tenantId, String username, String tempPassword) {
+    public CoOccupant addCoOccupant(CoOccupant coOccupant, Integer tenantId, Integer userId) {
         // Validate tenant exists
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new RuntimeException("Tenant not found with ID: " + tenantId));
+
+        // Validate and fetch the existing user
+        AppUser user = appUserService.findById(userId);
+
+        if (user.getTenant() != null) {
+            throw new RuntimeException("This user is already linked to a tenant. Please unlink them first.");
+        }
 
         coOccupant.setTenant(tenant);
 
@@ -37,19 +43,10 @@ public class CoOccupantService {
         log.info("Co-occupant {} {} created for tenant {} {}",
                 saved.getName(), saved.getSurname(), tenant.getName(), tenant.getSurname());
 
-        // Create an AppUser account for the co-occupant
-        AppUser appUser = new AppUser();
-        appUser.setFirstName(coOccupant.getName());
-        appUser.setLastName(coOccupant.getSurname());
-        appUser.setUsername(username);
-        appUser.setEmail(coOccupant.getEmail());
-        appUser.setCellPhoneNumber(coOccupant.getCellPhoneNumber());
-        appUser.setPassword(tempPassword);
-        appUser.setRole(UserRoles.CO_OCCUPANT);
-        appUser.setTenant(tenant); // Link to the same tenant (shares room context)
-
-        appUserService.registerUser(appUser);
-        log.info("Login account created for co-occupant: {} (role: CO_OCCUPANT)", username);
+        // Update the existing user's role and link to tenant
+        appUserService.updateRole(userId, UserRoles.CO_OCCUPANT);
+        appUserService.linkTenant(userId, tenantId);
+        log.info("User {} upgraded to CO_OCCUPANT and linked to tenant ID {}", user.getUsername(), tenantId);
 
         return saved;
     }
