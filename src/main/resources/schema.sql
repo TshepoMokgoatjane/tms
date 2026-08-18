@@ -66,3 +66,18 @@ CREATE TABLE house_rules_acknowledgement (
     FOREIGN KEY (house_rules_id) REFERENCES house_rules(id),
     UNIQUE KEY uk_tenant_house_rules (tenant_id, house_rules_id)
 );
+
+CREATE TABLE co_occupant (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    surname VARCHAR(50) NOT NULL,
+    relationship VARCHAR(20) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    cell_phone_number VARCHAR(10),
+    vehicle_registration VARCHAR(20),
+    tenant_id INT NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME,
+    FOREIGN KEY (tenant_id) REFERENCES tenant(id)
+);

@@ -5,6 +5,7 @@ public enum UserRoles {
 	ADMIN,
 	USER,
 	TENANT,
-	CARETAKER
+	CARETAKER,
+	CO_OCCUPANT
 
 }
