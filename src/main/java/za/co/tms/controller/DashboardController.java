@@ -90,6 +90,15 @@ public class DashboardController {
         stats.put("recentLogins", recentLogins);
         stats.put("neverLoggedInUsers", neverLoggedInUsers);
 
+        // Website interest — users who registered but aren't linked to any tenant (browsing public)
+        long totalBrowsingUsers = appUserRepository.countByRoleAndTenantIsNullAndStatusIs(UserRoles.USER, Status.OPEN);
+        long registeredThisWeek = appUserRepository.countByRoleAndDateCreatedAfter(UserRoles.USER, startOfWeek);
+        long registeredThisMonth = appUserRepository.countByRoleAndDateCreatedAfter(UserRoles.USER, startOfMonth);
+
+        stats.put("totalBrowsingUsers", totalBrowsingUsers);
+        stats.put("registeredThisWeek", registeredThisWeek);
+        stats.put("registeredThisMonth", registeredThisMonth);
+
         return ResponseEntity.ok(stats);
     }
 }

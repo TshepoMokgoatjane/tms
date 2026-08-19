@@ -30,4 +30,8 @@ public interface AppUserRepository extends JpaRepository<AppUser, Integer> {
     long countByLastLoginAtIsNull();
 
     long countByRoleInAndStatusIs(List<UserRoles> roles, Status status);
+
+    long countByRoleAndDateCreatedAfter(UserRoles role, LocalDateTime since);
+
+    long countByRoleAndTenantIsNullAndStatusIs(UserRoles role, Status status);
 }
