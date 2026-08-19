@@ -75,4 +75,7 @@ public class AppUser {
 
     @Column
     private String profileImageType; // e.g., "image/jpeg", "image/png"
+
+    @Column
+    private LocalDateTime lastLoginAt;
 }

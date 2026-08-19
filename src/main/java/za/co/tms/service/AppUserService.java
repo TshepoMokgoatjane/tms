@@ -127,4 +127,10 @@ public class AppUserService implements UserDetailsService {
     public List<AppUser> findUnlinkedUsers() {
         return appUserRepository.findByRoleAndTenantIsNull(UserRoles.USER);
     }
+
+    public void updateLastLogin(int id) {
+        AppUser user = findById(id);
+        user.setLastLoginAt(LocalDateTime.now());
+        appUserRepository.save(user);
+    }
 }

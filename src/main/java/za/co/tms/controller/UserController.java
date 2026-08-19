@@ -46,6 +46,7 @@ public class UserController {
 
         if (authentication.isAuthenticated()) {
             AppUser user = appUserService.findByUsername(authRequest.username());
+            appUserService.updateLastLogin(user.getId());
             String token = jwtTokenService.generateToken(authRequest.username());
             AuthResponse response = new AuthResponse(
                     token,
