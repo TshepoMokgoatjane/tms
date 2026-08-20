@@ -119,12 +119,23 @@ public class DashboardController {
         stats.put("activeThisMonthNames", activeThisMonthNames);
         stats.put("neverLoggedInNames", neverLoggedInNames);
 
-        // Website interest — users who registered but aren't linked to any tenant (browsing public)
-        long totalBrowsingUsers = appUserRepository.countByRoleAndTenantIsNullAndStatusIs(UserRoles.USER, Status.OPEN);
-        long registeredThisWeek = appUserRepository.countByRoleAndDateCreatedAfter(UserRoles.USER, startOfWeek);
-        long registeredThisMonth = appUserRepository.countByRoleAndDateCreatedAfter(UserRoles.USER, startOfMonth);
+        // Website interest — all user registrations (regardless of current role)
+        // This tracks how many people signed up via the website over time
+        List<UserRoles> nonAdminRoles = List.of(UserRoles.USER, UserRoles.TENANT, UserRoles.CO_OCCUPANT);
+        long totalRegistrations = allUsers.stream()
+                .filter(u -> nonAdminRoles.contains(u.getRole()))
+                .filter(u -> u.getStatus() == Status.OPEN)
+                .count();
+        long registeredThisWeek = allUsers.stream()
+                .filter(u -> nonAdminRoles.contains(u.getRole()))
+                .filter(u -> u.getDateCreated() != null && u.getDateCreated().isAfter(startOfWeek))
+                .count();
+        long registeredThisMonth = allUsers.stream()
+                .filter(u -> nonAdminRoles.contains(u.getRole()))
+                .filter(u -> u.getDateCreated() != null && u.getDateCreated().isAfter(startOfMonth))
+                .count();
 
-        stats.put("totalBrowsingUsers", totalBrowsingUsers);
+        stats.put("totalBrowsingUsers", totalRegistrations);
         stats.put("registeredThisWeek", registeredThisWeek);
         stats.put("registeredThisMonth", registeredThisMonth);
 
