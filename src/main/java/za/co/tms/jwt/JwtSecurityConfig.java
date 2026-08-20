@@ -51,6 +51,7 @@ public class JwtSecurityConfig {
  .requestMatchers("/api/testimonials/active").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/house-rules/current/download", "/house-rules/*/download").permitAll()
                 // Role-based access
                 .requestMatchers("/auth/user/profile/avatar/**").permitAll()
                 .requestMatchers("/auth/user/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER", "ROLE_TENANT", "ROLE_CARETAKER")
