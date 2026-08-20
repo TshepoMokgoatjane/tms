@@ -52,9 +52,35 @@ public class DashboardController {
 
         // Get recent login activity (last 10 logins)
         List<AppUser> allUsers = appUserRepository.findAll();
-        List<Map<String, Object>> recentLogins = allUsers.stream()
-                .filter(u -> u.getLastLoginAt() != null)
+        List<AppUser> tenantUsers = allUsers.stream()
                 .filter(u -> tenantRoles.contains(u.getRole()))
+                .filter(u -> u.getStatus() == Status.OPEN)
+                .toList();
+
+        // Categorize users by login activity
+        List<String> activeTodayNames = tenantUsers.stream()
+                .filter(u -> u.getLastLoginAt() != null && u.getLastLoginAt().isAfter(startOfToday))
+                .map(u -> u.getFirstName() + " " + u.getLastName())
+                .toList();
+
+        List<String> activeThisWeekNames = tenantUsers.stream()
+                .filter(u -> u.getLastLoginAt() != null && u.getLastLoginAt().isAfter(startOfWeek) && !u.getLastLoginAt().isAfter(startOfToday))
+                .map(u -> u.getFirstName() + " " + u.getLastName())
+                .toList();
+
+        List<String> activeThisMonthNames = tenantUsers.stream()
+                .filter(u -> u.getLastLoginAt() != null && u.getLastLoginAt().isAfter(startOfMonth) && !u.getLastLoginAt().isAfter(startOfWeek))
+                .map(u -> u.getFirstName() + " " + u.getLastName())
+                .toList();
+
+        List<String> neverLoggedInNames = tenantUsers.stream()
+                .filter(u -> u.getLastLoginAt() == null)
+                .map(u -> u.getFirstName() + " " + u.getLastName())
+                .toList();
+
+        // Recent logins for reference
+        List<Map<String, Object>> recentLogins = tenantUsers.stream()
+                .filter(u -> u.getLastLoginAt() != null)
                 .sorted((a, b) -> b.getLastLoginAt().compareTo(a.getLastLoginAt()))
                 .limit(10)
                 .map(u -> {
@@ -67,11 +93,9 @@ public class DashboardController {
                 })
                 .toList();
 
-        // Get users who never logged in
-        List<Map<String, Object>> neverLoggedInUsers = allUsers.stream()
+        // Get users who never logged in (with full details)
+        List<Map<String, Object>> neverLoggedInUsers = tenantUsers.stream()
                 .filter(u -> u.getLastLoginAt() == null)
-                .filter(u -> tenantRoles.contains(u.getRole()))
-                .filter(u -> u.getStatus() == Status.OPEN)
                 .map(u -> {
                     Map<String, Object> item = new HashMap<>();
                     item.put("name", u.getFirstName() + " " + u.getLastName());
@@ -89,6 +113,10 @@ public class DashboardController {
         stats.put("neverLoggedIn", neverLoggedIn);
         stats.put("recentLogins", recentLogins);
         stats.put("neverLoggedInUsers", neverLoggedInUsers);
+        stats.put("activeTodayNames", activeTodayNames);
+        stats.put("activeThisWeekNames", activeThisWeekNames);
+        stats.put("activeThisMonthNames", activeThisMonthNames);
+        stats.put("neverLoggedInNames", neverLoggedInNames);
 
         // Website interest — users who registered but aren't linked to any tenant (browsing public)
         long totalBrowsingUsers = appUserRepository.countByRoleAndTenantIsNullAndStatusIs(UserRoles.USER, Status.OPEN);
