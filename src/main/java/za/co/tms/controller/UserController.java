@@ -130,6 +130,13 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/admin/users/{id}/activate")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<String> activateUser(@PathVariable int id) {
+        appUserService.activateUser(id);
+        return ResponseEntity.ok("User activated successfully");
+    }
+
     /**
      * ADMIN: One-time sync — updates all linked tenants' email/phone from their AppUser registration data.
      */

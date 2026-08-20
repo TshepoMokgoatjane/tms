@@ -94,6 +94,14 @@ public class AppUserService implements UserDetailsService {
         log.info("User {} deactivated", user.getUsername());
     }
 
+    public void activateUser(int id) {
+        AppUser user = findById(id);
+        user.setStatus(Status.OPEN);
+        user.setDateModified(LocalDateTime.now());
+        appUserRepository.save(user);
+        log.info("User {} activated", user.getUsername());
+    }
+
     public AppUser updateRole(int id, UserRoles role) {
         AppUser user = findById(id);
         user.setRole(role);
