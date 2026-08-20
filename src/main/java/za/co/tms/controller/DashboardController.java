@@ -44,18 +44,14 @@ public class DashboardController {
         LocalDateTime startOfWeek = LocalDate.now().minusDays(7).atStartOfDay();
         LocalDateTime startOfMonth = LocalDate.now().minusDays(30).atStartOfDay();
 
-        long totalTenantUsers = appUserRepository.countByRoleInAndStatusIs(tenantRoles, Status.OPEN);
-        long activeToday = appUserRepository.countByLastLoginAtAfter(startOfToday);
-        long activeThisWeek = appUserRepository.countByLastLoginAtAfter(startOfWeek);
-        long activeThisMonth = appUserRepository.countByLastLoginAtAfter(startOfMonth);
-        long neverLoggedIn = appUserRepository.countByLastLoginAtIsNull();
-
-        // Get recent login activity (last 10 logins)
+        // Get all tenant/co-occupant users
         List<AppUser> allUsers = appUserRepository.findAll();
         List<AppUser> tenantUsers = allUsers.stream()
                 .filter(u -> tenantRoles.contains(u.getRole()))
                 .filter(u -> u.getStatus() == Status.OPEN)
                 .toList();
+
+        long totalTenantUsers = tenantUsers.size();
 
         // Categorize users by login activity
         List<String> activeTodayNames = tenantUsers.stream()
@@ -77,6 +73,11 @@ public class DashboardController {
                 .filter(u -> u.getLastLoginAt() == null)
                 .map(u -> u.getFirstName() + " " + u.getLastName())
                 .toList();
+
+        long activeToday = activeTodayNames.size();
+        long activeThisWeek = activeToday + activeThisWeekNames.size();
+        long activeThisMonth = activeThisWeek + activeThisMonthNames.size();
+        long neverLoggedIn = neverLoggedInNames.size();
 
         // Recent logins for reference
         List<Map<String, Object>> recentLogins = tenantUsers.stream()
