@@ -130,6 +130,16 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * ADMIN: One-time sync — updates all linked tenants' email/phone from their AppUser registration data.
+     */
+    @PostMapping("/admin/sync-tenant-contacts")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<String> syncTenantContacts() {
+        int synced = appUserService.syncAllTenantContacts();
+        return ResponseEntity.ok("Synced contact info for " + synced + " tenant(s).");
+    }
+
     @GetMapping("/welcome")
     public String welcome() {
         return "Welcome to the public endpoint!";

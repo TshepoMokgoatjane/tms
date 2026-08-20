@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import za.co.tms.domain.*;
 import za.co.tms.repository.AppUserRepository;
+import za.co.tms.repository.TenantRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,11 +20,13 @@ public class AppUserService implements UserDetailsService {
 
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TenantRepository tenantRepository;
 
     @Autowired
-    public AppUserService(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder) {
+    public AppUserService(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder, TenantRepository tenantRepository) {
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
+        this.tenantRepository = tenantRepository;
     }
 
     @Override
@@ -106,10 +109,20 @@ public class AppUserService implements UserDetailsService {
             user.setTenant(null);
             log.info("User {} unlinked from tenant", user.getUsername());
         } else {
-            Tenant tenant = new Tenant();
-            tenant.setId(tenantId);
+            Tenant tenant = tenantRepository.findById(tenantId)
+                    .orElseThrow(() -> new RuntimeException("Tenant not found with ID: " + tenantId));
+
+            // Sync contact info from user registration to tenant record
+            if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                tenant.setEmail(user.getEmail());
+            }
+            if (user.getCellPhoneNumber() != null && !user.getCellPhoneNumber().isBlank()) {
+                tenant.setCellPhoneNumber(user.getCellPhoneNumber());
+            }
+            tenantRepository.save(tenant);
+
             user.setTenant(tenant);
-            log.info("User {} linked to tenant ID {}", user.getUsername(), tenantId);
+            log.info("User {} linked to tenant ID {} — email/phone synced", user.getUsername(), tenantId);
         }
         user.setDateModified(LocalDateTime.now());
         return appUserRepository.save(user);
@@ -132,5 +145,36 @@ public class AppUserService implements UserDetailsService {
         AppUser user = findById(id);
         user.setLastLoginAt(LocalDateTime.now());
         appUserRepository.save(user);
+    }
+
+    /**
+     * One-time utility: sync email/phone from AppUser to their linked Tenant for all linked users.
+     */
+    public int syncAllTenantContacts() {
+        List<AppUser> allUsers = appUserRepository.findAll();
+        int count = 0;
+        for (AppUser user : allUsers) {
+            if (user.getTenant() != null) {
+                Tenant tenant = tenantRepository.findById(user.getTenant().getId()).orElse(null);
+                if (tenant != null) {
+                    boolean updated = false;
+                    if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                        tenant.setEmail(user.getEmail());
+                        updated = true;
+                    }
+                    if (user.getCellPhoneNumber() != null && !user.getCellPhoneNumber().isBlank()) {
+                        tenant.setCellPhoneNumber(user.getCellPhoneNumber());
+                        updated = true;
+                    }
+                    if (updated) {
+                        tenantRepository.save(tenant);
+                        count++;
+                        log.info("Synced contact for tenant {} {} from user {}", tenant.getName(), tenant.getSurname(), user.getUsername());
+                    }
+                }
+            }
+        }
+        log.info("Total tenants synced: {}", count);
+        return count;
     }
 }
