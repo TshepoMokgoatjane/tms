@@ -37,7 +37,10 @@ public class ContactUs {
     @Enumerated(EnumType.STRING)
     private ReferenceAd whereDidYouHearAboutUs;
 
+    @Column(columnDefinition = "TEXT")
     private String message;
+
+    @Column(columnDefinition = "TEXT")
     private String resolution;
 
     @Enumerated(EnumType.STRING)
