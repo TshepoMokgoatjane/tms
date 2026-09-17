@@ -3,6 +3,7 @@ package za.co.tms.domain;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 
 @Getter
 public enum PaymentDay {
@@ -28,10 +29,19 @@ public enum PaymentDay {
     }
 
     public boolean matches(LocalDate date) {
-        if (this == LAST_DAY) {
-            return date.getDayOfMonth() == date.lengthOfMonth();
-        }
-        return date.getDayOfMonth() == day;
+        return date.equals(resolveDueDate(YearMonth.from(date)));
+    }
+
+    /**
+     * Resolves the actual calendar due date for a given month, clamping the elected
+     * day to the number of days in that month. This handles short months correctly:
+     * e.g. DAY_30 in February resolves to 28 (or 29 in a leap year), and LAST_DAY
+     * always resolves to the final day of the month.
+     */
+    public LocalDate resolveDueDate(YearMonth yearMonth) {
+        int lastDay = yearMonth.lengthOfMonth();
+        int targetDay = (this == LAST_DAY) ? lastDay : Math.min(day, lastDay);
+        return yearMonth.atDay(targetDay);
     }
 
     public String getLabel() {

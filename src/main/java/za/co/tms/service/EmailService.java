@@ -86,6 +86,44 @@ public class EmailService {
     }
 
     @Async
+    public void sendOverdueRentNotice(Tenant tenant, long daysOverdue) {
+        if (tenant.getEmail() == null || tenant.getEmail().isBlank()) {
+            log.warn("Tenant {} {} has no email address, skipping overdue rent notice", tenant.getName(), tenant.getSurname());
+            return;
+        }
+
+        String subject = "URGENT: Overdue Rent Payment - Action Required";
+        String body = String.format(
+                "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>" +
+                "<div style='background: #b91c1c; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;'>" +
+                "<h1 style='color: white; margin: 0; font-size: 1.5rem;'>Overdue Rent Payment</h1>" +
+                "</div>" +
+                "<div style='background: white; padding: 30px; border: 1px solid #e5e7eb; border-radius: 0 0 10px 10px;'>" +
+                "<p>Dear %s %s,</p>" +
+                "<p>Our records show that your rent payment is now <b style='color:#b91c1c;'>%d day(s) overdue</b>.</p>" +
+                "<p><b>Room:</b> %s (%s)<br>" +
+                "<b>Amount due:</b> R%.2f<br>" +
+                "<b>Agreed payment date:</b> %s of each month</p>" +
+                "<p>As per our lease agreement, rent is payable on your elected date each month. " +
+                "We kindly but firmly request that you settle the outstanding amount immediately to avoid further action.</p>" +
+                "<p><i>If you have already made this payment, please disregard this notice and send us proof of payment so we can update your account.</i></p>" +
+                "<p>Kind regards,<br><b>TLT Properties Management</b></p>" +
+                "</div>" +
+                "</div>",
+                tenant.getTitle() != null ? tenant.getTitle().getDisplayName() : "",
+                tenant.getSurname(),
+                daysOverdue,
+                tenant.getRoom() != null ? tenant.getRoom().getCode() : "N/A",
+                tenant.getRoom() != null ? tenant.getRoom().getDescription() : "N/A",
+                tenant.getRentalAmount() != null ? tenant.getRentalAmount().doubleValue() : 0.0,
+                tenant.getPaymentDay() != null ? tenant.getPaymentDay().getLabel() : "N/A"
+        );
+
+        send(tenant.getEmail(), subject, body);
+        log.info("Overdue rent notice ({} days) emailed to tenant {} {}", daysOverdue, tenant.getName(), tenant.getSurname());
+    }
+
+    @Async
     public void sendTicketCreatedNotification(Ticket ticket) {
         try {
             var appUser = appUserRepository.findByUsername(ticket.getRaisedBy());

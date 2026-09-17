@@ -15,6 +15,8 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 	List<Payment> findByTenantIdAndPaymentDateBetween(Long tenantId, LocalDateTime start, LocalDateTime end);
 	boolean existsByTenantIdAndPaymentDateBetween(Long tenantId, LocalDateTime start, LocalDateTime end);
 
+	boolean existsByTenantIdAndPaymentStatusAndPaymentDateBetween(Long tenantId, PaymentStatus status, LocalDateTime start, LocalDateTime end);
+
 	// Report queries
 	List<Payment> findByPaymentDateBetween(LocalDateTime start, LocalDateTime end);
 	List<Payment> findByPaymentStatus(PaymentStatus status);

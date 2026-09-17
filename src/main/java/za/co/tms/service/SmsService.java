@@ -65,6 +65,27 @@ public class SmsService {
         }
     }
 
+    public void sendOverdueRentSms(Tenant tenant, long daysOverdue) {
+        if (tenant.getCellPhoneNumber() == null || tenant.getCellPhoneNumber().isBlank()) {
+            log.warn("Tenant {} {} has no phone number, skipping overdue rent SMS", tenant.getName(), tenant.getSurname());
+            return;
+        }
+
+        try {
+            String messageBody = String.format(
+                    "Hi %s %s, your rent is %d day(s) overdue. Per our lease agreement, please settle the outstanding amount urgently. Ignore if already paid. - TLTProperties",
+                    tenant.getTitle() != null ? tenant.getTitle().getDisplayName() : "",
+                    tenant.getSurname(),
+                    daysOverdue
+            );
+
+            sendSms(tenant.getCellPhoneNumber(), messageBody);
+            log.info("Overdue rent SMS ({} days) sent to tenant {} {}", daysOverdue, tenant.getName(), tenant.getSurname());
+        } catch (Exception e) {
+            log.error("Failed to send overdue rent SMS to tenant {} {}: {}", tenant.getName(), tenant.getSurname(), e.getMessage());
+        }
+    }
+
     public void sendPaymentReceivedSms(Tenant tenant) {
         if (tenant.getCellPhoneNumber() == null || tenant.getCellPhoneNumber().isBlank()) {
             log.warn("Tenant {} {} has no phone number, skipping payment received SMS", tenant.getName(), tenant.getSurname());

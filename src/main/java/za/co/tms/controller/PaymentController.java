@@ -11,12 +11,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import za.co.tms.domain.*;
+import za.co.tms.dto.RentStatusDTO;
 import za.co.tms.repository.PaymentRepository;
 import za.co.tms.repository.TenantRepository;
 import za.co.tms.service.AppUserService;
 import za.co.tms.service.EmailService;
 import za.co.tms.service.PaymentService;
 import za.co.tms.service.SmsService;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -61,6 +63,21 @@ public class PaymentController {
 
         List<Payment> payments = paymentRepository.findByTenantId(user.getTenant().getId().longValue());
         return ResponseEntity.ok(payments);
+    }
+
+    @GetMapping("/my-rent-status")
+    @Operation(summary = "Get my rent status", description = "Returns the current-period rent payment status for the authenticated tenant, used to drive the overdue banner")
+    public ResponseEntity<RentStatusDTO> getMyRentStatus() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        AppUser user = appUserService.findByUsername(username);
+
+        if (user.getTenant() == null) {
+            // Not a linked tenant — nothing to show.
+            return ResponseEntity.ok(new RentStatusDTO(true, null, 0, false, paymentService.getGracePeriodDays(), null));
+        }
+
+        RentStatusDTO status = paymentService.computeRentStatus(user.getTenant(), LocalDate.now());
+        return ResponseEntity.ok(status);
     }
 
     @PostMapping("/record")
