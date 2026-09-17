@@ -84,9 +84,12 @@ public class PaymentService {
      * if today is on/after this month's due date, the current period is this month;
      * otherwise it is the previous month (this month's rent isn't owed until its due date).
      *
-     * <p>Rent is considered PAID for the period if a PAID payment exists dated on/after
-     * the period's due date. The overdue banner shows only once the payment is unpaid AND
-     * today is past the due date + grace period.
+     * <p>Rent is considered PAID for the period if a PAID payment exists anywhere within
+     * the billing period — from the <em>previous</em> period's due date up to today. This
+     * deliberately includes payments made <b>before</b> the due date, so a tenant who pays
+     * early is correctly recognised as paid when the due date arrives (no false "overdue").
+     * The overdue banner shows only once the payment is unpaid AND today is past the due
+     * date + grace period.
      */
     public RentStatusDTO computeRentStatus(Tenant tenant, LocalDate today) {
         PaymentDay paymentDay = tenant.getPaymentDay();
@@ -103,8 +106,12 @@ public class PaymentService {
                 ? paymentDay.resolveDueDate(YearMonth.from(today).minusMonths(1))
                 : thisMonthDueDate;
 
-        // Paid if a PAID payment exists dated on/after the period's due date.
-        LocalDateTime periodStart = dueDate.atStartOfDay();
+        // The billing period runs from the day AFTER the previous period's due date up to
+        // today. Any PAID payment in that span counts toward this period — including early
+        // payments made before the due date — while the previous period's on-time payment
+        // (made on its own due date) is excluded so it can't satisfy this period.
+        LocalDate previousDueDate = paymentDay.resolveDueDate(YearMonth.from(dueDate).minusMonths(1));
+        LocalDateTime periodStart = previousDueDate.plusDays(1).atStartOfDay();
         LocalDateTime windowEnd = today.plusDays(1).atStartOfDay().minusNanos(1);
         boolean paid = paymentRepository.existsByTenantIdAndPaymentStatusAndPaymentDateBetween(
                 tenant.getId().longValue(), PaymentStatus.PAID, periodStart, windowEnd);
