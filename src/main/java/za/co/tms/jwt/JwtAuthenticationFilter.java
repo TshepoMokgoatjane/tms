@@ -44,6 +44,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.jwtDecoder = NimbusJwtDecoder.withSecretKey(key).macAlgorithm(MacAlgorithm.HS256).build();
     }
 
+    /**
+     * Public endpoints that don't require authentication should not run through JWT decoding.
+     * The avatar endpoint is loaded via a plain <img src> tag, which cannot attach the
+     * Authorization header, so any header present is stale/invalid and only produces noise.
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        return "GET".equalsIgnoreCase(request.getMethod())
+                && uri != null
+                && uri.startsWith("/auth/user/profile/avatar/");
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
