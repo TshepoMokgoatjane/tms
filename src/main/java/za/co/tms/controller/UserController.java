@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import za.co.tms.domain.AppUser;
 import za.co.tms.domain.UserRoles;
 import za.co.tms.dto.AuthResponse;
+import za.co.tms.dto.ImpersonationResponse;
 import za.co.tms.dto.RegisterRequest;
 import za.co.tms.jwt.JwtTokenRequest;
 import za.co.tms.jwt.JwtTokenService;
@@ -28,15 +29,20 @@ import java.util.List;
 @RequestMapping(path = "/auth")
 public class UserController {
 
+    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(UserController.class);
+
     private final AppUserService appUserService;
     private final JwtTokenService jwtTokenService;
     private final AuthenticationManager authenticationManager;
+    private final za.co.tms.service.EmailService emailService;
 
     @Autowired
-    public UserController(AppUserService appUserService, JwtTokenService jwtTokenService, AuthenticationManager authenticationManager) {
+    public UserController(AppUserService appUserService, JwtTokenService jwtTokenService,
+                          AuthenticationManager authenticationManager, za.co.tms.service.EmailService emailService) {
         this.appUserService = appUserService;
         this.jwtTokenService = jwtTokenService;
         this.authenticationManager = authenticationManager;
+        this.emailService = emailService;
     }
 
     @PostMapping("/generateToken")
@@ -121,6 +127,57 @@ public class UserController {
         List<AppUser> users = appUserService.findAllUsers();
         users.forEach(u -> u.setPassword(null));
         return ResponseEntity.ok(users);
+    }
+
+    /**
+     * ADMIN: start a read-only "View as Tenant" session. Mints a short-lived impersonation
+     * token scoped to the tenant, logs the action, and emails the admin a security notice.
+     * Only users with the TENANT role can be impersonated.
+     */
+    @PostMapping("/admin/impersonate/{tenantUsername}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<ImpersonationResponse> impersonateTenant(@PathVariable String tenantUsername,
+                                                                   Authentication authentication) {
+        String adminUsername = authentication != null
+                ? authentication.getName()
+                : SecurityContextHolder.getContext().getAuthentication().getName();
+
+        AppUser admin = appUserService.findByUsername(adminUsername);
+        AppUser target = appUserService.findByUsername(tenantUsername);
+
+        // Only tenant accounts may be impersonated.
+        if (target.getRole() != UserRoles.TENANT) {
+            LOGGER.warn("Admin {} attempted to impersonate non-tenant user {} (role {})",
+                    adminUsername, tenantUsername, target.getRole());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        String token = jwtTokenService.generateImpersonationToken(tenantUsername, adminUsername);
+
+        String displayName;
+        if (target.getTenant() != null) {
+            displayName = target.getTenant().getName() + " " + target.getTenant().getSurname();
+        } else {
+            displayName = (target.getFirstName() != null ? target.getFirstName() : "")
+                    + " " + (target.getLastName() != null ? target.getLastName() : "");
+            displayName = displayName.trim();
+        }
+
+        // Audit log
+        LOGGER.info("IMPERSONATION START: admin {} started viewing as tenant {} ({}) at {}",
+                adminUsername, tenantUsername, displayName, java.time.LocalDateTime.now());
+
+        // Security email to the admin
+        try {
+            String adminName = admin.getFirstName() != null ? admin.getFirstName() : adminUsername;
+            emailService.sendImpersonationStartedNotice(admin.getEmail(), adminName, displayName, tenantUsername);
+        } catch (Exception e) {
+            LOGGER.error("Failed to send impersonation notice email to admin {}: {}", adminUsername, e.getMessage());
+        }
+
+        ImpersonationResponse resp = new ImpersonationResponse(
+                token, tenantUsername, UserRoles.TENANT.name(), displayName, adminUsername, true);
+        return ResponseEntity.ok(resp);
     }
 
     @DeleteMapping("/admin/users/{id}")

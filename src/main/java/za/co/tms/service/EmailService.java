@@ -86,6 +86,32 @@ public class EmailService {
     }
 
     @Async
+    public void sendImpersonationStartedNotice(String adminEmail, String adminName, String tenantName, String tenantUsername) {
+        if (adminEmail == null || adminEmail.isBlank()) {
+            log.warn("Admin has no email address, skipping impersonation notification");
+            return;
+        }
+
+        String subject = "Security Notice: Tenant view-as session started";
+        String body = String.format(
+                "Dear %s,<br><br>" +
+                "This is a security notification confirming that a <b>read-only \"View as Tenant\"</b> session was started from your admin account.<br><br>" +
+                "<b>Viewing as:</b> %s (%s)<br>" +
+                "<b>Started at:</b> %s<br>" +
+                "<b>Session type:</b> Read-only (no changes can be made)<br><br>" +
+                "If this was not you, please change your password immediately and contact your system administrator.<br><br>" +
+                "Kind regards,<br><b>TLT Properties System</b>",
+                adminName != null ? adminName : "Administrator",
+                tenantName,
+                tenantUsername,
+                java.time.LocalDateTime.now()
+        );
+
+        send(adminEmail, subject, body);
+        log.info("Impersonation start notice emailed to admin {}", adminEmail);
+    }
+
+    @Async
     public void sendOverdueRentNotice(Tenant tenant, long daysOverdue) {
         if (tenant.getEmail() == null || tenant.getEmail().isBlank()) {
             log.warn("Tenant {} {} has no email address, skipping overdue rent notice", tenant.getName(), tenant.getSurname());

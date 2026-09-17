@@ -72,6 +72,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 LOGGER.info("JWT decoded successfully for user: {}", username);
 
+                // Read-only impersonation enforcement: a token minted for "View as tenant"
+                // carries mode=READONLY. Such a session may only issue GET requests — any
+                // state-changing request is blocked here regardless of the target endpoint.
+                String mode = jwt.getClaimAsString("mode");
+                if ("READONLY".equals(mode) && !"GET".equalsIgnoreCase(request.getMethod())) {
+                    String impersonatedBy = jwt.getClaimAsString("impersonated_by");
+                    LOGGER.warn("Blocked {} {} — admin {} impersonating {} (read-only)",
+                            request.getMethod(), request.getRequestURI(), impersonatedBy, username);
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json");
+                    response.getWriter().write(
+                            "{\"error\":\"Read-only session. Changes are not permitted while viewing as a tenant.\"}");
+                    return;
+                }
+
                 if (username != null) {
                     UserDetails userDetails = appUserService.loadUserByUsername(username);
 

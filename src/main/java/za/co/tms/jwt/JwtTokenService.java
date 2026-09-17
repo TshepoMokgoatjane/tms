@@ -27,11 +27,40 @@ public class JwtTokenService {
 
     @Value("${jwt.secret}")
     private String secret;
-    
+
+    /** TTL (in minutes) for read-only impersonation tokens. Short-lived by design. */
+    @Value("${impersonation.token-ttl-minutes:30}")
+    private long impersonationTtlMinutes;
+
     private final JwtEncoder jwtEncoder;
 
     public JwtTokenService(JwtEncoder jwtEncoder) {
         this.jwtEncoder = jwtEncoder;
+    }
+
+    /**
+     * Mints a short-lived, read-only impersonation token so an ADMIN can view the portal
+     * as a tenant. The subject is the tenant so all tenant code paths resolve naturally,
+     * but the token is tagged read-only and records who is impersonating.
+     *
+     * @param tenantUsername the tenant whose view is being entered (token subject)
+     * @param adminUsername  the admin performing the impersonation (recorded for audit)
+     */
+    public String generateImpersonationToken(String tenantUsername, String adminUsername) {
+        var claims = JwtClaimsSet.builder()
+                .issuer("self")
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plus(impersonationTtlMinutes, ChronoUnit.MINUTES))
+                .subject(tenantUsername)
+                .claim("scope", "ROLE_TENANT")
+                .claim("mode", "READONLY")
+                .claim("impersonated_by", adminUsername)
+                .build();
+
+        JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256).build();
+        return this.jwtEncoder
+                .encode(JwtEncoderParameters.from(jwsHeader, claims))
+                .getTokenValue();
     }
 
     public String generateToken(Authentication authentication) {
