@@ -8,4 +8,7 @@ import java.util.List;
 
 public interface GalleryImageRepository extends JpaRepository<GalleryImage, Long> {
     List<GalleryImage> findByStatusOrderByDisplayOrderAsc(GalleryImageStatus status);
+
+    // Photos for a specific advertised unit, ordered for a carousel.
+    List<GalleryImage> findByRoomIdOrderByDisplayOrderAscIdAsc(Long roomId);
 }

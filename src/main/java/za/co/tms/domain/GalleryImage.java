@@ -60,4 +60,7 @@ public class GalleryImage extends AuditModel implements Serializable {
 
  @Schema(description = "Display order for sorting", example = "1")
  private int displayOrder;
+
+ @Schema(description = "Owning room id when this image is a specific unit's photo (category UNIT). Null for general gallery images.", example = "5")
+ private Long roomId;
 }

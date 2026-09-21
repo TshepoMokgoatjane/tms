@@ -31,6 +31,28 @@ public class Room {
 
 	private boolean occupied;
 
+	// ===== Advertising fields =====
+
+	/** Whether this unit is currently being advertised as available. */
+	private boolean advertised;
+
+	/** Date advertising started (set manually by admin or automatically by the scheduler). */
+	private LocalDate advertisingStartDate;
+
+	/** Optional date advertising should stop. Null means "until occupied / stopped manually". */
+	private LocalDate advertisingEndDate;
+
+	/** The date the unit becomes / became available (typically the outgoing tenant's lease end date). */
+	private LocalDate availableFrom;
+
+	/** Rich marketing description shown on the public advert. */
+	@Column(columnDefinition = "TEXT")
+	private String advertDescription;
+
+	/** Documents a prospective tenant must supply (one per line). */
+	@Column(columnDefinition = "TEXT")
+	private String documentsRequired;
+
 	private LocalDate createdAt;
 	private LocalDateTime updatedAt;
 

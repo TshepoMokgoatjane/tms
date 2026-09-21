@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface RoomRepository extends JpaRepository<Room, Long> {
     List<Room> findByOccupiedFalse();
     Optional<Room> findByCode(String code);
+    List<Room> findByAdvertisedTrue();
 }
