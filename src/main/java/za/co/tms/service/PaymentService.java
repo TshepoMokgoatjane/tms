@@ -100,18 +100,40 @@ public class PaymentService {
             return new RentStatusDTO(true, null, 0, false, gracePeriodDays, amountDue);
         }
 
+        // A tenant who hasn't moved in yet owes nothing — never flag them overdue before
+        // their lease has even started.
+        LocalDate leaseStart = tenant.getLeaseStartDate();
+        if (leaseStart != null && today.isBefore(leaseStart)) {
+            return new RentStatusDTO(true, null, 0, false, gracePeriodDays, amountDue);
+        }
+
         // Determine the current period's due date (clamped to the month length).
         LocalDate thisMonthDueDate = paymentDay.resolveDueDate(YearMonth.from(today));
         LocalDate dueDate = today.isBefore(thisMonthDueDate)
                 ? paymentDay.resolveDueDate(YearMonth.from(today).minusMonths(1))
                 : thisMonthDueDate;
 
-        // The billing period runs from the day AFTER the previous period's due date up to
-        // today. Any PAID payment in that span counts toward this period — including early
-        // payments made before the due date — while the previous period's on-time payment
-        // (made on its own due date) is excluded so it can't satisfy this period.
+        // If the computed due date falls before the tenant moved in, there is no period they
+        // owe for yet (e.g. a new tenant whose first due date hasn't arrived).
+        if (leaseStart != null && dueDate.isBefore(leaseStart)) {
+            return new RentStatusDTO(true, dueDate, 0, false, gracePeriodDays, amountDue);
+        }
+
+        // The billing period normally runs from the day AFTER the previous period's due date
+        // up to today, so any PAID payment in that span counts toward this period — including
+        // early payments made before the due date.
         LocalDate previousDueDate = paymentDay.resolveDueDate(YearMonth.from(dueDate).minusMonths(1));
-        LocalDateTime periodStart = previousDueDate.plusDays(1).atStartOfDay();
+        LocalDate windowStartDate = previousDueDate.plusDays(1);
+
+        // For a tenant's FIRST period, the deposit / first-month rent is usually paid BEFORE
+        // move-in — which is before the previous due date. Widen the window back to the lease
+        // start (or the recorded payment, whichever is earlier) so that pre-move-in payment is
+        // correctly counted and the tenant isn't falsely shown as overdue.
+        if (leaseStart != null && leaseStart.isBefore(windowStartDate)) {
+            windowStartDate = leaseStart;
+        }
+
+        LocalDateTime periodStart = windowStartDate.atStartOfDay();
         LocalDateTime windowEnd = today.plusDays(1).atStartOfDay().minusNanos(1);
         boolean paid = paymentRepository.existsByTenantIdAndPaymentStatusAndPaymentDateBetween(
                 tenant.getId().longValue(), PaymentStatus.PAID, periodStart, windowEnd);
