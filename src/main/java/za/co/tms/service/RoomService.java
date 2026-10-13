@@ -121,13 +121,18 @@ public class RoomService {
     }
 
     /**
-     * Returns rooms that should be publicly visible right now: flagged as advertised, not occupied,
-     * and within their advertising window (start already reached, end not yet passed).
+     * Returns rooms that should be publicly visible right now: flagged as advertised and within
+     * their advertising window (start already reached, end not yet passed).
+     *
+     * <p>Occupancy is deliberately NOT a filter here. A unit can be advertised while the outgoing
+     * tenant is still in place (e.g. advertising a month before the lease ends, or a mid-month
+     * departure) so we can line up the next tenant and avoid a vacancy gap. The advert instead
+     * communicates WHEN the unit is available via {@code availableFrom} / the occupancy flag, which
+     * the frontend turns into an "Available now" / "Available from {date}" / "Available soon" label.
      */
     public List<Room> findCurrentlyAdvertised() {
         LocalDate today = LocalDate.now();
         return roomRepository.findByAdvertisedTrue().stream()
-                .filter(room -> !room.isOccupied())
                 .filter(room -> room.getAdvertisingStartDate() == null || !room.getAdvertisingStartDate().isAfter(today))
                 .filter(room -> room.getAdvertisingEndDate() == null || !room.getAdvertisingEndDate().isBefore(today))
                 .collect(Collectors.toList());

@@ -15,7 +15,10 @@ import za.co.tms.dto.AdvertisedUnitDTO;
 import za.co.tms.service.GalleryImageService;
 import za.co.tms.service.RoomService;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 /**
@@ -25,6 +28,9 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/advertised-units")
 public class AdvertisedUnitController {
+
+    private static final DateTimeFormatter AVAILABLE_FROM_FORMAT =
+            DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH);
 
     private final RoomService roomService;
     private final GalleryImageService galleryImageService;
@@ -79,6 +85,25 @@ public class AdvertisedUnitController {
                 room.getAdvertDescription(),
                 room.getDocumentsRequired(),
                 room.getAvailableFrom(),
+                room.isOccupied(),
+                buildAvailabilityLabel(room),
                 imageIds);
+    }
+
+    /**
+     * Human-friendly availability text for the advert:
+     *  - empty unit            -> "Available now"
+     *  - occupied, has a date  -> "Available from {d MMMM yyyy}"
+     *  - occupied, no date yet  -> "Available soon"
+     */
+    private String buildAvailabilityLabel(Room room) {
+        if (!room.isOccupied()) {
+            return "Available now";
+        }
+        LocalDate from = room.getAvailableFrom();
+        if (from != null) {
+            return "Available from " + from.format(AVAILABLE_FROM_FORMAT);
+        }
+        return "Available soon";
     }
 }

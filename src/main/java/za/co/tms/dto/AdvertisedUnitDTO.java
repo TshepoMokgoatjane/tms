@@ -26,5 +26,7 @@ public class AdvertisedUnitDTO {
     private String description;      // marketing copy
     private String documentsRequired;
     private LocalDate availableFrom;
+    private boolean occupied;        // true if the outgoing tenant is still in the unit
+    private String availabilityLabel; // ready-to-render: "Available now" / "Available from ..." / "Available soon"
     private List<Long> imageIds;     // ordered photo ids for this specific unit
 }
