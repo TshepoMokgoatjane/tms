@@ -50,15 +50,6 @@ public class AdvertisedUnitController {
         return ResponseEntity.ok(units);
     }
 
-    @GetMapping("/{roomId}/images")
-    @Operation(summary = "List advertised unit photo ids", description = "Ordered photo ids for a specific advertised unit")
-    public ResponseEntity<List<Long>> getUnitImageIds(@PathVariable Long roomId) {
-        List<Long> ids = roomService.getRoomImages(roomId).stream()
-                .map(GalleryImage::getId)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(ids);
-    }
-
     @GetMapping("/image/{imageId}")
     @Operation(summary = "Serve an advertised unit photo", description = "Returns the image binary for a unit photo")
     public ResponseEntity<byte[]> serveUnitImage(@PathVariable Long imageId) {
