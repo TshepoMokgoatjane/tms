@@ -43,6 +43,8 @@ public class TicketService {
 	
 	public Ticket addHelpdeskTicket(Ticket helpdeskTicket) {
 		helpdeskTicket.setId(null);
+		// Record initial status timestamp so retention can measure time-in-terminal-state later.
+		helpdeskTicket.setStatusChangedAt(java.time.LocalDateTime.now());
 		Ticket savedTicket = ticketRepository.save(helpdeskTicket);
 		
 		// Send notifications when ticket is created
@@ -56,6 +58,8 @@ public class TicketService {
 	public void deleteHelpdeskTicketById(Long id) {
 		Ticket helpdeskTicket = findHelpdeskTicketById(id);
 		helpdeskTicket.setStatus(Status.CLOSED);
+		// Mark when it entered the terminal state so retention can age it correctly.
+		helpdeskTicket.setStatusChangedAt(java.time.LocalDateTime.now());
 		ticketRepository.save(helpdeskTicket);
 	}
 	
@@ -73,6 +77,14 @@ public class TicketService {
 				.map(a -> a.getAuthority().replace("ROLE_", ""))
 				.orElse("USER");
 		
+		// Stamp the moment the status changes so retention measures time-in-terminal-state
+		// from the correct point; otherwise preserve the existing timestamp.
+		if (previousStatus != helpdeskTicket.getStatus()) {
+			helpdeskTicket.setStatusChangedAt(java.time.LocalDateTime.now());
+		} else {
+			helpdeskTicket.setStatusChangedAt(existingTicket.getStatusChangedAt());
+		}
+
 		// Update the ticket
 		ticketRepository.save(helpdeskTicket);
 		

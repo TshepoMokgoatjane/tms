@@ -41,4 +41,10 @@ public class Ticket implements Serializable {
 	private Category category;	
 	private Priority priority;	
 	private Status status;
+
+	/**
+	 * When the ticket's status last changed. Used by the retention job to measure how long a
+	 * ticket has been in a terminal state (CLOSED/COMPLETED) before it is eligible for purge.
+	 */
+	private LocalDateTime statusChangedAt;
 }
