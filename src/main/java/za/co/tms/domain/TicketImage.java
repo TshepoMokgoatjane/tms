@@ -59,4 +59,19 @@ public class TicketImage implements Serializable {
             this.uploadedAt = LocalDateTime.now();
         }
     }
+
+    /**
+     * Metadata-only constructor for list/projection queries so the {@code imageData} blob is
+     * never loaded for list views. {@code imageData} is left null; bytes are loaded only when a
+     * single image is fetched by id for serving.
+     */
+    public TicketImage(Long id, Long ticketId, String originalFilename, String contentType,
+                       Long fileSize, LocalDateTime uploadedAt) {
+        this.id = id;
+        this.ticketId = ticketId;
+        this.originalFilename = originalFilename;
+        this.contentType = contentType;
+        this.fileSize = fileSize;
+        this.uploadedAt = uploadedAt;
+    }
 }

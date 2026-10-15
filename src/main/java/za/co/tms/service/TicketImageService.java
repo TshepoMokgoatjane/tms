@@ -36,7 +36,8 @@ public class TicketImageService {
     }
 
     public List<TicketImage> getTicketImages(Long ticketId) {
-        return ticketImageRepository.findByTicketIdOrderByUploadedAtAscIdAsc(ticketId);
+        // Metadata only — the controller returns ids; bytes are served separately by id.
+        return ticketImageRepository.findByTicketIdMetadata(ticketId);
     }
 
     public TicketImage getImage(Long imageId) {

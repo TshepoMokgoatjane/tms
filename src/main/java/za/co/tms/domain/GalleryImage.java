@@ -63,4 +63,25 @@ public class GalleryImage extends AuditModel implements Serializable {
 
  @Schema(description = "Owning room id when this image is a specific unit's photo (category UNIT). Null for general gallery images.", example = "5")
  private Long roomId;
+
+ /**
+  * Metadata-only constructor used by list/projection queries so the heavy {@code imageData}
+  * blob is NEVER loaded for list views (prevents loading every image's bytes into heap, which
+  * caused OutOfMemoryError). {@code imageData} is deliberately left null; it is only populated
+  * when a single image is fetched by id for serving.
+  */
+ public GalleryImage(Long id, String title, String description, String originalFilename,
+                     String contentType, Long fileSize, GalleryImageCategory category,
+                     GalleryImageStatus status, int displayOrder, Long roomId) {
+     this.id = id;
+     this.title = title;
+     this.description = description;
+     this.originalFilename = originalFilename;
+     this.contentType = contentType;
+     this.fileSize = fileSize;
+     this.category = category;
+     this.status = status;
+     this.displayOrder = displayOrder;
+     this.roomId = roomId;
+ }
 }

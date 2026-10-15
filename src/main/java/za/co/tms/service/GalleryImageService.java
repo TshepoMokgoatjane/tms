@@ -24,13 +24,14 @@ public class GalleryImageService {
     }
 
     public List<GalleryImage> getAllGalleryImages() {
-        LOGGER.info("Find all gallery images");
-        return galleryImageRepository.findAll();
+        LOGGER.info("Find all gallery images (metadata only)");
+        // Metadata-only: never loads image_data blobs into memory (prevents OOM on large libraries).
+        return galleryImageRepository.findAllMetadata();
     }
 
     public List<GalleryImage> getActiveGalleryImages() {
-        LOGGER.info("Find all active gallery images");
-        return galleryImageRepository.findByStatusOrderByDisplayOrderAsc(GalleryImageStatus.ACTIVE);
+        LOGGER.info("Find all active gallery images (metadata only)");
+        return galleryImageRepository.findActiveMetadata(GalleryImageStatus.ACTIVE);
     }
 
     public GalleryImage getGalleryImageById(Long id) {

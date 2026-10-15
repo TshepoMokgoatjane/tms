@@ -75,14 +75,12 @@ public class RoomService {
         return roomRepository.save(existingRoom);
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public void deleteRoom(Long id) {
         LOGGER.info("Deleting room with ID {}", id);
         Room room = findById(id);
-        // Remove any unit photos tied to this room so we don't orphan image rows.
-        List<GalleryImage> images = galleryImageRepository.findByRoomIdOrderByDisplayOrderAscIdAsc(id);
-        if (!images.isEmpty()) {
-            galleryImageRepository.deleteAll(images);
-        }
+        // Remove any unit photos tied to this room (bulk delete, no blobs loaded into memory).
+        galleryImageRepository.deleteByRoomId(id);
         roomRepository.delete(room);
     }
 
@@ -141,7 +139,8 @@ public class RoomService {
     // ===================== Per-unit photos =====================
 
     public List<GalleryImage> getRoomImages(Long roomId) {
-        return galleryImageRepository.findByRoomIdOrderByDisplayOrderAscIdAsc(roomId);
+        // Metadata only — callers use ids/metadata; the blob is served separately by id.
+        return galleryImageRepository.findByRoomIdMetadata(roomId);
     }
 
     /**
