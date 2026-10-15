@@ -46,6 +46,9 @@ public class GlobalExceptionHandler {
             validationErrors.put(error.getField(), error.getDefaultMessage());
         }
 
+        // Log the field-level failures so validation 400s are diagnosable from server logs.
+        log.warn("Validation failed: {}", validationErrors);
+
         ErrorResponse errorResponse = new ErrorResponse("VALIDATION_FAILED", "Validation failed", validationErrors);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }

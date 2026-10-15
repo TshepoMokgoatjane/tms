@@ -94,6 +94,14 @@ public class TenantController {
 		return ResponseEntity.ok(titles);
 	}
 
+	@GetMapping("/payment-dates")
+	public ResponseEntity<List<Map<String, String>>> getPaymentDates() {
+		List<Map<String, String>> paymentDates = Arrays.stream(za.co.tms.domain.PaymentDay.values())
+				.map(d -> Map.of("name", d.name(), "displayName", d.getLabel()))
+				.toList();
+		return ResponseEntity.ok(paymentDates);
+	}
+
 	@GetMapping(path = "/find/my-profile/{username}")
 	@Operation(summary = "Get tenant profile by linked username")
 	public ResponseEntity<TenantResponseDTO> retrieveTenantByUsername(@PathVariable String username) {

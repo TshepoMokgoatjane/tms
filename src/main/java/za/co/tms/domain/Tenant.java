@@ -68,11 +68,12 @@ public class Tenant extends AuditModel implements Serializable {
     @Schema(description = "Number of tenants in the unit", example = "2")
     private int numberOfTenantsInUnit;
 
-    @PastOrPresent
+    // No past/future constraint: a lease may start or end in the past, present or future
+    // (e.g. onboarding a tenant ahead of move-in). The only rule — end not before start —
+    // is enforced by TenantValidator.validateLeaseDates and in the frontend.
     @Schema(description = "Lease start date", example = "2025-11-01")
     private LocalDate leaseStartDate;
 
-    @FutureOrPresent
     @Schema(description = "Lease end date", example = "2026-11-01")
     private LocalDate leaseEndDate;
 
