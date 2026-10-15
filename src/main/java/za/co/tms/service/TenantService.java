@@ -77,11 +77,14 @@ public class TenantService {
         Tenant tenant = findTenantById(id); // will throw if not found
         tenant.setTenantStatus(TenantStatus.INACTIVE);
 
-        // Free up the room when tenant is deactivated
+        // Free up the room when tenant is deactivated, then DETACH it from this (now former)
+        // tenant so the unit is cleanly available for the next tenant. The tenant's own history
+        // (payments, tickets, lease dates) is unaffected — none of it is tied to the room.
         if (tenant.getRoom() != null) {
             Room room = tenant.getRoom();
             room.setOccupied(false);
             roomRepository.save(room);
+            tenant.setRoom(null);
         }
 
         tenantRepository.save(tenant);
@@ -103,10 +106,12 @@ public class TenantService {
         boolean becomingActive = updatedTenant.getTenantStatus() == TenantStatus.ACTIVE
                 && existingTenant.getTenantStatus() != TenantStatus.ACTIVE;
 
-        // If tenant is being deactivated, free their room
+        // If tenant is being deactivated, free their room and detach it so the unit is cleanly
+        // available for the next tenant (history stays with this tenant record either way).
         if (becomingInactive && oldRoom != null) {
             oldRoom.setOccupied(false);
             roomRepository.save(oldRoom);
+            updatedTenant.setRoom(null);
         } else if (becomingActive && newRoom != null) {
             // Tenant reactivated — mark their assigned room as occupied
             Room roomToOccupy = roomRepository.findById(newRoom.getId())
