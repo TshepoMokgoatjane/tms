@@ -20,6 +20,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -107,6 +108,62 @@ public class TenantServiceTest {
         assertNull(result.getId()); // assuming it is set to null before safe
 
         assertEquals("New Tenant", result.getName());
+    }
+
+    // ===================== addTenant room-id guard =====================
+
+    @Test
+    void addTenant_withValidRoom_marksRoomOccupiedAndKeepsLink() {
+        Room room = new Room();
+        room.setId(5L);
+        room.setCode("A8");
+        room.setOccupied(false);
+
+        Tenant tenant = new Tenant();
+        tenant.setName("Incoming");
+        tenant.setRoom(room);
+
+        when(roomRepository.findById(5L)).thenReturn(Optional.of(room));
+        when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Tenant result = tenantService.addTenant(tenant);
+
+        assertNotNull(result.getRoom(), "A valid room must stay assigned");
+        assertEquals("A8", result.getRoom().getCode());
+        assertTrue(room.isOccupied(), "Assigned room must be marked occupied");
+        verify(roomRepository).save(room);
+    }
+
+    @Test
+    void addTenant_withRoomHavingNullId_treatsAsNoRoom() {
+        // The frontend sends room: { id: "" } -> deserialized as a Room with a null id when no
+        // room was selected. The service must NOT call findById(null); it should drop the room.
+        Room emptyRoom = new Room(); // id is null
+        Tenant tenant = new Tenant();
+        tenant.setName("No Room Picked");
+        tenant.setRoom(emptyRoom);
+
+        when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Tenant result = tenantService.addTenant(tenant);
+
+        assertNull(result.getRoom(), "A room with a null id must be treated as no room");
+        // Must never attempt a room lookup with a null id.
+        verify(roomRepository, never()).findById(any());
+    }
+
+    @Test
+    void addTenant_withNullRoom_savesWithoutRoom() {
+        Tenant tenant = new Tenant();
+        tenant.setName("No Room At All");
+        tenant.setRoom(null);
+
+        when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Tenant result = tenantService.addTenant(tenant);
+
+        assertNull(result.getRoom());
+        verify(roomRepository, never()).findById(any());
     }
 
     @Test

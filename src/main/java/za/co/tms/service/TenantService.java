@@ -59,12 +59,18 @@ public class TenantService {
 
         tenant.setId(null); // Ensure it's a new tenant
 
-        // Mark the assigned room as occupied
-        if (tenant.getRoom() != null) {
+        // Mark the assigned room as occupied. The frontend may send a room object with a
+        // null/empty id when no room was selected — treat that as "no room assigned" rather
+        // than calling findById(null), which would otherwise surface as a generic 500.
+        if (tenant.getRoom() != null && tenant.getRoom().getId() != null) {
             Room room = roomRepository.findById(tenant.getRoom().getId())
                     .orElseThrow(() -> new RuntimeException("Room not found"));
             room.setOccupied(true);
             roomRepository.save(room);
+            tenant.setRoom(room);
+        } else {
+            // No valid room selected — don't persist a dangling/empty room reference.
+            tenant.setRoom(null);
         }
 		
 		return tenantRepository.save(tenant);
