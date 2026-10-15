@@ -21,12 +21,14 @@ public class AppUserService implements UserDetailsService {
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
     private final TenantRepository tenantRepository;
+    private final TenantService tenantService;
 
     @Autowired
-    public AppUserService(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder, TenantRepository tenantRepository) {
+    public AppUserService(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder, TenantRepository tenantRepository, TenantService tenantService) {
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.tenantRepository = tenantRepository;
+        this.tenantService = tenantService;
     }
 
     @Override
@@ -92,6 +94,24 @@ public class AppUserService implements UserDetailsService {
         user.setDateModified(LocalDateTime.now());
         appUserRepository.save(user);
         log.info("User {} deactivated", user.getUsername());
+
+        // One-directional offboarding sync: if this account is linked to a tenant that is still
+        // active, retire the tenant too (sets INACTIVE and frees + detaches their room via the
+        // tested TenantService path). This keeps the account and tenancy from drifting out of
+        // sync on move-out. Reactivation is deliberately NOT symmetric — bringing a tenant back
+        // requires a fresh room assignment and lease, so it stays a manual step.
+        Tenant linkedTenant = user.getTenant();
+        if (linkedTenant != null && linkedTenant.getTenantStatus() != TenantStatus.INACTIVE) {
+            try {
+                tenantService.deleteTenantById(linkedTenant.getId());
+                log.info("Linked tenant {} retired as part of deactivating user {}",
+                        linkedTenant.getId(), user.getUsername());
+            } catch (Exception e) {
+                // Don't fail the account deactivation if the tenant sync hiccups; log for follow-up.
+                log.error("Deactivated user {} but failed to retire linked tenant {}: {}",
+                        user.getUsername(), linkedTenant.getId(), e.getMessage(), e);
+            }
+        }
     }
 
     public void activateUser(int id) {
