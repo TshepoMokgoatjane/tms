@@ -27,15 +27,20 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final TenantRepository tenantRepository;
+    private final EmailService emailService;
+    private final SmsService smsService;
 
     /** Grace period (in days) after the due date before rent is treated as overdue. Configurable. */
     @Value("${rent.grace-period-days:3}")
     private int gracePeriodDays;
 
     @Autowired
-    public PaymentService(PaymentRepository paymentRepository, TenantRepository tenantRepository) {
+    public PaymentService(PaymentRepository paymentRepository, TenantRepository tenantRepository,
+                          EmailService emailService, SmsService smsService) {
         this.paymentRepository = paymentRepository;
         this.tenantRepository = tenantRepository;
+        this.emailService = emailService;
+        this.smsService = smsService;
     }
 
     public List<Payment> findAll() {
@@ -61,7 +66,40 @@ public class PaymentService {
             payment.setTenant(tenant);
         }
 
-        return paymentRepository.save(payment);
+        Payment savedPayment = paymentRepository.save(payment);
+
+        // When a payment is captured directly as PAID (the normal "record payment" flow),
+        // send the tenant a thank-you confirmation. The mark-as-paid flow has its own
+        // notification, so we only fire here for payments that are already PAID on capture.
+        sendPaymentConfirmationIfPaid(savedPayment);
+
+        return savedPayment;
+    }
+
+    /**
+     * Sends a payment-received thank-you email and SMS when the given payment is PAID and has a
+     * resolved tenant. Reuses {@link EmailService#sendPaymentReceivedNotification(Tenant)} and
+     * {@link SmsService#sendPaymentReceivedSms(Tenant)}. Notification failures are logged and
+     * never allowed to break the payment save.
+     */
+    private void sendPaymentConfirmationIfPaid(Payment payment) {
+        if (payment == null || payment.getPaymentStatus() != PaymentStatus.PAID) {
+            return;
+        }
+        Tenant tenant = payment.getTenant();
+        if (tenant == null) {
+            LOGGER.warn("Payment {} is PAID but has no tenant; skipping payment confirmation notification", payment.getId());
+            return;
+        }
+        try {
+            emailService.sendPaymentReceivedNotification(tenant);
+            smsService.sendPaymentReceivedSms(tenant);
+            LOGGER.info("Payment confirmation notifications sent to tenant {} {} for payment {}",
+                    tenant.getName(), tenant.getSurname(), payment.getId());
+        } catch (Exception e) {
+            LOGGER.error("Failed to send payment confirmation notifications for payment {}: {}",
+                    payment.getId(), e.getMessage());
+        }
     }
 
     public Payment updatePaymentStatus(Long paymentId, PaymentStatus status) {
