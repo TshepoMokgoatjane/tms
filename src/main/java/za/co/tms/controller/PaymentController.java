@@ -86,6 +86,68 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.recordPayment(payment));
     }
 
+    @PostMapping("/{paymentId}/resend-confirmation")
+    @Operation(summary = "Resend payment confirmation",
+            description = "Re-sends the payment-received thank-you email and SMS for an existing PAID payment. " +
+                    "Non-destructive: it does not change the payment's amount, date, method or status. " +
+                    "Use this to deliver a confirmation that was missed (e.g. for a payment captured before confirmations were sent on the record flow).")
+    public ResponseEntity<Payment> resendPaymentConfirmation(
+            @Parameter(description = "ID of the payment to resend the confirmation for")
+            @PathVariable Long paymentId) {
+        Optional<Payment> optionalPayment = paymentRepository.findById(paymentId);
+        if (optionalPayment.isEmpty()) {
+            log.warn("Resend confirmation: payment ID [{}] not found", paymentId);
+            return ResponseEntity.notFound().build();
+        }
+        Payment payment = optionalPayment.get();
+        if (payment.getPaymentStatus() != PaymentStatus.PAID) {
+            log.warn("Resend confirmation: payment [{}] is {} (not PAID); refusing to send a confirmation", paymentId, payment.getPaymentStatus());
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+        if (payment.getTenant() == null) {
+            log.warn("Resend confirmation: payment [{}] has no tenant; cannot send confirmation", paymentId);
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+        sendConfirmation(payment.getTenant(), paymentId);
+        return ResponseEntity.ok(payment);
+    }
+
+    @PostMapping("/tenant/{tenantId}/resend-confirmation")
+    @Operation(summary = "Resend payment confirmation for a tenant's latest PAID payment",
+            description = "Re-sends the payment-received thank-you email and SMS for the tenant's most recent PAID payment. " +
+                    "Non-destructive: nothing on the payment record is modified. Returns 404 if the tenant has no PAID payment.")
+    public ResponseEntity<Payment> resendPaymentConfirmationForTenant(
+            @Parameter(description = "ID of the tenant whose latest PAID payment should be re-confirmed")
+            @PathVariable Long tenantId) {
+        Payment latestPaid = paymentRepository.findByTenantIdAndPaymentStatus(tenantId, PaymentStatus.PAID)
+                .stream()
+                .filter(p -> p.getPaymentDate() != null)
+                .max(java.util.Comparator.comparing(Payment::getPaymentDate))
+                .orElse(null);
+
+        if (latestPaid == null) {
+            log.warn("Resend confirmation: tenant [{}] has no PAID payment to confirm", tenantId);
+            return ResponseEntity.notFound().build();
+        }
+        if (latestPaid.getTenant() == null) {
+            log.warn("Resend confirmation: latest PAID payment [{}] for tenant [{}] has no tenant link", latestPaid.getId(), tenantId);
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+        sendConfirmation(latestPaid.getTenant(), latestPaid.getId());
+        return ResponseEntity.ok(latestPaid);
+    }
+
+    /** Sends the thank-you email + SMS for an existing payment without mutating the payment record. */
+    private void sendConfirmation(Tenant tenant, Long paymentId) {
+        try {
+            emailService.sendPaymentReceivedNotification(tenant);
+            smsService.sendPaymentReceivedSms(tenant);
+            log.info("Resent payment confirmation to tenant {} {} for payment {}", tenant.getName(), tenant.getSurname(), paymentId);
+        } catch (Exception e) {
+            log.error("Failed to resend payment confirmation for payment {}: {}", paymentId, e.getMessage());
+        }
+    }
+
     @DeleteMapping("/{paymentId}")
     @Operation(summary = "Delete a payment", description = "Removes a payment record")
     public ResponseEntity<Void> deletePayment(@PathVariable Long paymentId) {
