@@ -45,7 +45,6 @@ public class JwtSecurityConfig {
                 .requestMatchers("/auth/welcome", "/auth/register", "/auth/addNewUser", "/auth/generateToken").permitAll()
                 .requestMatchers("/contact-us/**").permitAll()
                 .requestMatchers("/tenants/**").permitAll()
-                .requestMatchers("/api/payments/**").permitAll()
                 .requestMatchers("/api/gallery/active", "/api/gallery/image/**").permitAll()
                 .requestMatchers("/api/advertised-units/**").permitAll()
                 .requestMatchers("/faqs/**").permitAll()
@@ -55,6 +54,13 @@ public class JwtSecurityConfig {
                 .requestMatchers("/house-rules/current/download", "/house-rules/*/download").permitAll()
                 // Role-based access
                 .requestMatchers("/auth/user/profile/avatar/**").permitAll()
+                // Payments: a logged-in tenant may only read their OWN payments and rent status.
+                // Everything else (record, delete, mark-paid/failed, resend-confirmation, all/tenant
+                // lookups) is administrative and restricted to ADMIN. The more specific tenant
+                // matchers MUST precede the broad admin lock below.
+                .requestMatchers("/api/payments/my-payments", "/api/payments/my-rent-status")
+                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_TENANT")
+                .requestMatchers("/api/payments/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/auth/user/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER", "ROLE_TENANT", "ROLE_CARETAKER")
                 .requestMatchers("/auth/admin/**").hasAuthority("ROLE_ADMIN")
                 .anyRequest().authenticated()
