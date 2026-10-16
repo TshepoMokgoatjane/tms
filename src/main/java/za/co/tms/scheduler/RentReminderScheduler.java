@@ -9,8 +9,10 @@ import za.co.tms.domain.Payment;
 import za.co.tms.domain.PaymentMethod;
 import za.co.tms.domain.PaymentStatus;
 import za.co.tms.domain.Tenant;
+import za.co.tms.dto.RentStatusDTO;
 import za.co.tms.repository.PaymentRepository;
 import za.co.tms.service.EmailService;
+import za.co.tms.service.PaymentService;
 import za.co.tms.service.SmsService;
 import za.co.tms.service.TenantService;
 
@@ -31,6 +33,8 @@ public class RentReminderScheduler {
     private final SmsService smsService;
 
     private final PaymentRepository paymentRepository;
+
+    private final PaymentService paymentService;
 
     // Runs every day at 8 AM
     /*
@@ -68,12 +72,23 @@ public class RentReminderScheduler {
 
     private void processRentReminder(Tenant tenant) {
         try {
-            // Prevent duplicate payment
+            // Skip tenants who have already paid for the CURRENT billing period — this correctly
+            // recognises EARLY payments (paid before the due date), so a tenant who pays ahead of
+            // time gets neither a reminder nor a duplicate PENDING payment record on the due date.
+            // Reuses the same period-aware logic that drives the overdue banner.
+            RentStatusDTO status = paymentService.computeRentStatus(tenant, LocalDate.now());
+            if (status.isPaid()) {
+                log.info("Rent already paid for the current period — skipping reminder for: {} {}",
+                        tenant.getName(), tenant.getSurname());
+                return;
+            }
+
+            // Belt-and-braces: also skip if a payment record was already created today (prevents a
+            // duplicate if the reminder somehow runs twice in one day).
             LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
             LocalDateTime endOfDay = startOfDay.plusDays(1).minusSeconds(1);
-
             if (paymentRepository.existsByTenantIdAndPaymentDateBetween(tenant.getId().longValue(), startOfDay, endOfDay)) {
-                log.info("Payment already exists for tenant: {} {} on {}", tenant.getName(), tenant.getSurname(), LocalDate.now());
+                log.info("Payment record already exists today for tenant: {} {} on {}", tenant.getName(), tenant.getSurname(), LocalDate.now());
                 return;
             }
 
