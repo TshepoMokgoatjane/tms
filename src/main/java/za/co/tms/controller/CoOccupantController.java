@@ -7,10 +7,14 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import za.co.tms.domain.AppUser;
 import za.co.tms.domain.CoOccupant;
+import za.co.tms.domain.PaymentDay;
 import za.co.tms.domain.Relationship;
+import za.co.tms.domain.Tenant;
+import za.co.tms.domain.Title;
 import za.co.tms.service.AppUserService;
 import za.co.tms.service.CoOccupantService;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -142,6 +146,61 @@ public class CoOccupantController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Map<String, Integer>> reconcileOrphanedCoOccupants() {
         return ResponseEntity.ok(coOccupantService.reconcileOrphanedCoOccupants());
+    }
+
+    /**
+     * ADMIN: Promote a co-occupant into a full primary tenant (e.g. a dependent takes over the
+     * lease when the current main tenant moves out). Creates a new tenant from the co-occupant,
+     * re-links their login account as TENANT, and closes the co-occupant record. Does NOT
+     * deactivate the outgoing tenant — that stays a separate explicit action.
+     *
+     * <p>Body: {@code { coOccupantId, roomId, paymentDay, leaseStartDate?, leaseEndDate?, title? }}.
+     */
+    @PostMapping("/promote")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<?> promoteCoOccupant(@RequestBody Map<String, Object> request) {
+        try {
+            Long coOccupantId = toLong(request.get("coOccupantId"));
+            Long roomId = toLong(request.get("roomId"));
+            PaymentDay paymentDay = request.get("paymentDay") != null
+                    ? PaymentDay.valueOf((String) request.get("paymentDay")) : null;
+            Title title = request.get("title") != null && !((String) request.get("title")).isBlank()
+                    ? Title.valueOf((String) request.get("title")) : null;
+            LocalDate leaseStart = parseDate(request.get("leaseStartDate"));
+            LocalDate leaseEnd = parseDate(request.get("leaseEndDate"));
+
+            if (coOccupantId == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "coOccupantId is required."));
+            }
+
+            Tenant newTenant = coOccupantService.promoteToPrimaryTenant(
+                    coOccupantId, roomId, leaseStart, leaseEnd, paymentDay, title);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("tenantId", newTenant.getId());
+            response.put("name", newTenant.getName());
+            response.put("surname", newTenant.getSurname());
+            response.put("message", newTenant.getName() + " " + newTenant.getSurname()
+                    + " was promoted to primary tenant.");
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    private Long toLong(Object value) {
+        if (value == null) return null;
+        if (value instanceof Number n) return n.longValue();
+        String s = value.toString().trim();
+        return s.isEmpty() ? null : Long.valueOf(s);
+    }
+
+    private LocalDate parseDate(Object value) {
+        if (value == null) return null;
+        String s = value.toString().trim();
+        return s.isEmpty() ? null : LocalDate.parse(s);
     }
 
     /**

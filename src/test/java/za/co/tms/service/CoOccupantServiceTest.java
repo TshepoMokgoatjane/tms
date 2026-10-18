@@ -7,18 +7,23 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import za.co.tms.domain.AppUser;
 import za.co.tms.domain.CoOccupant;
+import za.co.tms.domain.PaymentDay;
 import za.co.tms.domain.Relationship;
 import za.co.tms.domain.Status;
+import za.co.tms.domain.Tenant;
 import za.co.tms.domain.TenantStatus;
 import za.co.tms.domain.UserRoles;
 import za.co.tms.repository.AppUserRepository;
 import za.co.tms.repository.CoOccupantRepository;
 import za.co.tms.repository.TenantRepository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -38,6 +43,9 @@ public class CoOccupantServiceTest {
 
     @Mock
     private AppUserRepository appUserRepository;
+
+    @Mock
+    private TenantService tenantService;
 
     @InjectMocks
     private CoOccupantService coOccupantService;
@@ -97,5 +105,56 @@ public class CoOccupantServiceTest {
         assertEquals(0, summary.get("loginAccountsClosed"));
         verify(coOccupantRepository, never()).saveAll(any());
         verify(appUserRepository, never()).saveAll(any());
+    }
+
+    // ===================== Promote co-occupant to primary tenant =====================
+
+    @Test
+    void promote_createsTenant_relinksLogin_andClosesCoOccupant() {
+        CoOccupant co = coOccupant(7L, Status.OPEN);
+        co.setName("Zizo");
+        co.setSurname("Ngcingane");
+        co.setEmail("zizo@testemail.com");
+
+        AppUser loginAccount = coOccupantUser(90, Status.OPEN);
+        loginAccount.setEmail("zizo@testemail.com");
+
+        Tenant createdTenant = new Tenant();
+        createdTenant.setId(42);
+        createdTenant.setName("Zizo");
+        createdTenant.setSurname("Ngcingane");
+
+        when(coOccupantRepository.findById(7L)).thenReturn(Optional.of(co));
+        when(tenantService.addTenant(any(Tenant.class))).thenReturn(createdTenant);
+        when(appUserRepository.findByEmail("zizo@testemail.com")).thenReturn(Optional.of(loginAccount));
+
+        Tenant result = coOccupantService.promoteToPrimaryTenant(
+                7L, 10L, LocalDate.now(), LocalDate.now().plusMonths(12), PaymentDay.DAY_1, null);
+
+        assertEquals(42, result.getId());
+        // Login account re-linked to the new tenant and upgraded to TENANT.
+        verify(appUserService).linkTenant(90, 42);
+        verify(appUserService).updateRole(90, UserRoles.TENANT);
+        // Co-occupant record closed.
+        assertEquals(Status.CLOSED, co.getStatus());
+        verify(coOccupantRepository).save(co);
+    }
+
+    @Test
+    void promote_withoutPaymentDay_throws() {
+        CoOccupant co = coOccupant(7L, Status.OPEN);
+        when(coOccupantRepository.findById(7L)).thenReturn(Optional.of(co));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                coOccupantService.promoteToPrimaryTenant(7L, 10L, null, null, null, null));
+    }
+
+    @Test
+    void promote_whenCoOccupantAlreadyClosed_throws() {
+        CoOccupant co = coOccupant(7L, Status.CLOSED);
+        when(coOccupantRepository.findById(7L)).thenReturn(Optional.of(co));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                coOccupantService.promoteToPrimaryTenant(7L, 10L, null, null, PaymentDay.DAY_1, null));
     }
 }

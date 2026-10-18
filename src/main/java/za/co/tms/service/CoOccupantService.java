@@ -22,6 +22,7 @@ public class CoOccupantService {
     private final TenantRepository tenantRepository;
     private final AppUserService appUserService;
     private final AppUserRepository appUserRepository;
+    private final TenantService tenantService;
 
     /**
      * Link an existing registered user as a co-occupant to a primary tenant.
@@ -152,5 +153,89 @@ public class CoOccupantService {
         return Map.of(
                 "coOccupantsClosed", orphanRecords.size(),
                 "loginAccountsClosed", orphanAccounts.size());
+    }
+
+    /**
+     * Promotes a co-occupant (dependent) into a full primary tenant — used when a co-occupant
+     * takes over the lease, typically because the current main tenant is moving out.
+     *
+     * <p>Steps:
+     * <ol>
+     *   <li>Create a new {@link Tenant} from the co-occupant's details, assigned to the given room
+     *       with the supplied lease terms (room occupancy + lease validation run through
+     *       {@link TenantService#addTenant}).</li>
+     *   <li>Re-point the co-occupant's login account (matched by email) from the old main tenant to
+     *       the new tenant and upgrade its role from CO_OCCUPANT to TENANT, so they keep access as
+     *       the primary tenant.</li>
+     *   <li>Close the co-occupant record — they are now a tenant, not a dependent.</li>
+     * </ol>
+     *
+     * <p>This deliberately does NOT deactivate the previous main tenant. Offboarding the outgoing
+     * tenant stays a separate, explicit admin action so promotion and move-out can't be conflated
+     * (and so the promotion isn't cascade-closed along with the old tenant).
+     *
+     * @param coOccupantId the co-occupant to promote
+     * @param roomId       the room the new tenant will occupy (usually the room being vacated)
+     * @param leaseStart   new lease start date (nullable)
+     * @param leaseEnd     new lease end date (nullable)
+     * @param paymentDay   the new tenant's rent payment day (required)
+     * @param title        optional title; defaults to null
+     * @return the newly created primary {@link Tenant}
+     */
+    @Transactional
+    public Tenant promoteToPrimaryTenant(Long coOccupantId, Long roomId,
+                                         java.time.LocalDate leaseStart, java.time.LocalDate leaseEnd,
+                                         PaymentDay paymentDay, Title title) {
+        CoOccupant coOccupant = getById(coOccupantId);
+
+        if (coOccupant.getStatus() == Status.CLOSED) {
+            throw new IllegalArgumentException("Cannot promote a co-occupant that is already inactive.");
+        }
+        if (paymentDay == null) {
+            throw new IllegalArgumentException("A payment day is required to promote a co-occupant to a tenant.");
+        }
+        if (roomId == null) {
+            throw new IllegalArgumentException("A room is required to promote a co-occupant to a tenant.");
+        }
+
+        // 1) Build the new primary tenant from the co-occupant's details.
+        Tenant newTenant = new Tenant();
+        newTenant.setName(coOccupant.getName());
+        newTenant.setSurname(coOccupant.getSurname());
+        newTenant.setTitle(title);
+        newTenant.setEmail(coOccupant.getEmail());
+        newTenant.setCellPhoneNumber(coOccupant.getCellPhoneNumber());
+        newTenant.setLeaseStartDate(leaseStart);
+        newTenant.setLeaseEndDate(leaseEnd);
+        newTenant.setPaymentDay(paymentDay);
+        newTenant.setTenantBehaviour(TenantBehaviour.GOOD);
+        newTenant.setTenantStatus(TenantStatus.ACTIVE);
+        newTenant.setNumberOfTenantsInUnit(1);
+
+        Room room = new Room();
+        room.setId(roomId);
+        newTenant.setRoom(room);
+
+        // addTenant resolves + occupies the room and validates the lease dates.
+        Tenant savedTenant = tenantService.addTenant(newTenant);
+        log.info("Promoted co-occupant {} {} to primary tenant ID {}",
+                coOccupant.getName(), coOccupant.getSurname(), savedTenant.getId());
+
+        // 2) Re-link the co-occupant's login account (matched by email) to the new tenant and
+        //    upgrade its role to TENANT so they keep access as the primary tenant.
+        if (coOccupant.getEmail() != null && !coOccupant.getEmail().isBlank()) {
+            appUserRepository.findByEmail(coOccupant.getEmail()).ifPresent(account -> {
+                appUserService.linkTenant(account.getId(), savedTenant.getId());
+                appUserService.updateRole(account.getId(), UserRoles.TENANT);
+                log.info("Re-linked login account {} to new tenant {} as TENANT",
+                        account.getUsername(), savedTenant.getId());
+            });
+        }
+
+        // 3) Close the co-occupant record — they are now a full tenant.
+        coOccupant.setStatus(Status.CLOSED);
+        coOccupantRepository.save(coOccupant);
+
+        return savedTenant;
     }
 }
