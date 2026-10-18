@@ -5,10 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import za.co.tms.domain.*;
+import za.co.tms.repository.AppUserRepository;
 import za.co.tms.repository.CoOccupantRepository;
 import za.co.tms.repository.TenantRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -18,6 +21,7 @@ public class CoOccupantService {
     private final CoOccupantRepository coOccupantRepository;
     private final TenantRepository tenantRepository;
     private final AppUserService appUserService;
+    private final AppUserRepository appUserRepository;
 
     /**
      * Link an existing registered user as a co-occupant to a primary tenant.
@@ -107,5 +111,46 @@ public class CoOccupantService {
         coOccupant.setStatus(Status.CLOSED);
         coOccupantRepository.save(coOccupant);
         log.info("Co-occupant {} {} deactivated", coOccupant.getName(), coOccupant.getSurname());
+    }
+
+    /**
+     * One-time maintenance: reconcile orphaned co-occupants. Finds every co-occupant record and
+     * co-occupant login account that is still active but whose main tenant is already INACTIVE
+     * (e.g. tenants deactivated before the offboarding cascade existed) and soft-closes them.
+     *
+     * <p>Idempotent — running it again after a clean sweep closes nothing. Returns a small summary
+     * of how many records and login accounts were closed.
+     *
+     * @return a map with {@code coOccupantsClosed} and {@code loginAccountsClosed} counts
+     */
+    @Transactional
+    public Map<String, Integer> reconcileOrphanedCoOccupants() {
+        // 1) Close co-occupant records whose main tenant is INACTIVE.
+        List<CoOccupant> orphanRecords =
+                coOccupantRepository.findActiveWithTenantStatus(Status.CLOSED, TenantStatus.INACTIVE);
+        for (CoOccupant coOccupant : orphanRecords) {
+            coOccupant.setStatus(Status.CLOSED);
+        }
+        if (!orphanRecords.isEmpty()) {
+            coOccupantRepository.saveAll(orphanRecords);
+        }
+
+        // 2) Close co-occupant login accounts whose linked tenant is INACTIVE.
+        List<AppUser> orphanAccounts = appUserRepository.findActiveByRoleWithTenantStatus(
+                UserRoles.CO_OCCUPANT, Status.CLOSED, TenantStatus.INACTIVE);
+        for (AppUser user : orphanAccounts) {
+            user.setStatus(Status.CLOSED);
+            user.setDateModified(LocalDateTime.now());
+        }
+        if (!orphanAccounts.isEmpty()) {
+            appUserRepository.saveAll(orphanAccounts);
+        }
+
+        log.info("Reconcile orphaned co-occupants: closed {} record(s) and {} login account(s)",
+                orphanRecords.size(), orphanAccounts.size());
+
+        return Map.of(
+                "coOccupantsClosed", orphanRecords.size(),
+                "loginAccountsClosed", orphanAccounts.size());
     }
 }

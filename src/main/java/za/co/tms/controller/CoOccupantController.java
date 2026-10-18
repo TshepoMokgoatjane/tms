@@ -134,6 +134,17 @@ public class CoOccupantController {
     }
 
     /**
+     * ADMIN: One-time maintenance — reconcile orphaned co-occupants. Closes any co-occupant
+     * record or login account that is still active while its main tenant is already INACTIVE
+     * (dependents left behind by deactivations that predate the offboarding cascade). Idempotent.
+     */
+    @PostMapping("/reconcile-orphans")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Map<String, Integer>> reconcileOrphanedCoOccupants() {
+        return ResponseEntity.ok(coOccupantService.reconcileOrphanedCoOccupants());
+    }
+
+    /**
      * Get available relationship types.
      */
     @GetMapping("/relationships")

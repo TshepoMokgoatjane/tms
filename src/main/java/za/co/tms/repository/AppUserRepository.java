@@ -27,6 +27,17 @@ public interface AppUserRepository extends JpaRepository<AppUser, Integer> {
 
     List<AppUser> findByTenantIdAndRole(Integer tenantId, UserRoles role);
 
+    /**
+     * Orphan sweep: co-occupant login accounts that are still active (status != given) but whose
+     * linked tenant has already been deactivated. Used by the one-time reconcile.
+     */
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT u FROM AppUser u WHERE u.role = :role AND u.status <> :status AND u.tenant.tenantStatus = :tenantStatus")
+    List<AppUser> findActiveByRoleWithTenantStatus(
+        @org.springframework.data.repository.query.Param("role") UserRoles role,
+        @org.springframework.data.repository.query.Param("status") Status status,
+        @org.springframework.data.repository.query.Param("tenantStatus") za.co.tms.domain.TenantStatus tenantStatus);
+
     long countByLastLoginAtAfter(LocalDateTime since);
 
     long countByLastLoginAtIsNull();
