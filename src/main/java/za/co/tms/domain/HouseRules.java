@@ -38,6 +38,7 @@ public class HouseRules {
     @Column(nullable = false)
     private LocalDateTime uploadedAt;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false)

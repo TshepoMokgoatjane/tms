@@ -31,6 +31,7 @@ public class GalleryImage extends AuditModel implements Serializable {
  private String title;
 
  @Schema(description = "Image description", example = "Spacious living room with natural light")
+ @Column(columnDefinition = "TEXT")
  private String description;
 
  @Schema(description = "Original uploaded filename", example = "living-room.jpg")

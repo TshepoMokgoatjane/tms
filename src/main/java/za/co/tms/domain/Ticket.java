@@ -36,7 +36,9 @@ public class Ticket implements Serializable {
 	private String raisedBy;	
 	private LocalDateTime dateRaised;	
 	private String subject;	
+	@Column(columnDefinition = "TEXT")
 	private String description;	
+	@Column(columnDefinition = "TEXT")
 	private String comments;	
 	private Category category;	
 	private Priority priority;	
