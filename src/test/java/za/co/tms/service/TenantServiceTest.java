@@ -6,9 +6,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import za.co.tms.exception.TenantNotFoundException;
+import za.co.tms.domain.CoOccupant;
+import za.co.tms.domain.Relationship;
 import za.co.tms.domain.Room;
+import za.co.tms.domain.Status;
 import za.co.tms.domain.Tenant;
 import za.co.tms.domain.TenantStatus;
+import za.co.tms.repository.CoOccupantRepository;
 import za.co.tms.repository.RoomRepository;
 import za.co.tms.repository.TenantRepository;
 import za.co.tms.validator.TenantValidator;
@@ -35,6 +39,9 @@ public class TenantServiceTest {
 
     @Mock
     private RoomRepository roomRepository;
+
+    @Mock
+    private CoOccupantRepository coOccupantRepository;
 
     @InjectMocks
     private TenantService tenantService;
@@ -323,5 +330,86 @@ public class TenantServiceTest {
         assertEquals(TenantStatus.ACTIVE, result.getTenantStatus());
         assertNotNull(result.getRoom(), "An active tenant must keep their room assigned");
         assertEquals("A8", result.getRoom().getCode());
+    }
+
+    // ===================== Cascade: close co-occupants when main tenant is offboarded =====================
+
+    private CoOccupant coOccupant(long id, Status status) {
+        CoOccupant c = new CoOccupant();
+        c.setId(id);
+        c.setName("Dependent");
+        c.setSurname("Person");
+        c.setRelationship(Relationship.CHILD);
+        c.setEmail("dependent" + id + "@testemail.com");
+        c.setStatus(status);
+        return c;
+    }
+
+    @Test
+    void deactivatingTenantViaDelete_closesTheirCoOccupants() {
+        int tenantId = 1;
+        Tenant tenant = new Tenant();
+        tenant.setId(tenantId);
+        tenant.setName("Main");
+        tenant.setTenantStatus(TenantStatus.ACTIVE);
+
+        CoOccupant dep1 = coOccupant(100L, Status.OPEN);
+        CoOccupant dep2 = coOccupant(101L, Status.OPEN);
+
+        when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(tenant));
+        when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(coOccupantRepository.findByTenantIdAndStatusNot(tenantId, Status.CLOSED))
+                .thenReturn(List.of(dep1, dep2));
+
+        tenantService.deleteTenantById(tenantId);
+
+        // Both dependents must be retired (CLOSED) so none is left under the departed parent.
+        assertEquals(Status.CLOSED, dep1.getStatus());
+        assertEquals(Status.CLOSED, dep2.getStatus());
+        verify(coOccupantRepository).saveAll(List.of(dep1, dep2));
+    }
+
+    @Test
+    void deactivatingTenantViaUpdate_closesTheirCoOccupants() {
+        int tenantId = 1;
+        Tenant existing = new Tenant();
+        existing.setId(tenantId);
+        existing.setName("Main");
+        existing.setTenantStatus(TenantStatus.ACTIVE);
+
+        Tenant update = new Tenant();
+        update.setName("Main");
+        update.setSurname("Tenant");
+        update.setTenantStatus(TenantStatus.INACTIVE);
+
+        CoOccupant dep = coOccupant(100L, Status.OPEN);
+
+        when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(existing));
+        when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(coOccupantRepository.findByTenantIdAndStatusNot(tenantId, Status.CLOSED))
+                .thenReturn(List.of(dep));
+
+        tenantService.updateTenant(tenantId, update);
+
+        assertEquals(Status.CLOSED, dep.getStatus(), "Dependent must be closed when main tenant is deactivated");
+        verify(coOccupantRepository).saveAll(List.of(dep));
+    }
+
+    @Test
+    void deactivatingTenantWithNoCoOccupants_doesNotSaveAny() {
+        int tenantId = 1;
+        Tenant tenant = new Tenant();
+        tenant.setId(tenantId);
+        tenant.setTenantStatus(TenantStatus.ACTIVE);
+
+        when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(tenant));
+        when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(coOccupantRepository.findByTenantIdAndStatusNot(tenantId, Status.CLOSED))
+                .thenReturn(List.of());
+
+        tenantService.deleteTenantById(tenantId);
+
+        // Nothing to close -> never call saveAll.
+        verify(coOccupantRepository, never()).saveAll(any());
     }
 }

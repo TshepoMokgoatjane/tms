@@ -5,9 +5,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import za.co.tms.exception.TenantNotFoundException;
+import za.co.tms.domain.CoOccupant;
 import za.co.tms.domain.Room;
+import za.co.tms.domain.Status;
 import za.co.tms.domain.Tenant;
 import za.co.tms.domain.TenantStatus;
+import za.co.tms.repository.CoOccupantRepository;
 import za.co.tms.repository.RoomRepository;
 import za.co.tms.repository.TenantRepository;
 import za.co.tms.validator.TenantValidator;
@@ -23,12 +26,15 @@ public class TenantService {
 	private final TenantRepository tenantRepository;
     private final TenantValidator tenantValidator;
     private final RoomRepository roomRepository;
+    private final CoOccupantRepository coOccupantRepository;
 	
 	@Autowired
-	public TenantService(TenantRepository tenantRepository, TenantValidator tenantValidator, RoomRepository roomRepository) {
+	public TenantService(TenantRepository tenantRepository, TenantValidator tenantValidator,
+                         RoomRepository roomRepository, CoOccupantRepository coOccupantRepository) {
 		this.tenantRepository = tenantRepository;
         this.tenantValidator = tenantValidator;
         this.roomRepository = roomRepository;
+        this.coOccupantRepository = coOccupantRepository;
 	}
 			
 	public List<Tenant> findAllTenants() {
@@ -93,7 +99,33 @@ public class TenantService {
             tenant.setRoom(null);
         }
 
+        // A co-occupant (dependent) only exists under a main tenant. When the main tenant is
+        // offboarded, close their co-occupants too so none are left active under a departed
+        // parent (CoOccupant.tenant is non-nullable, so they must be retired, not detached).
+        deactivateCoOccupantsOf(tenant);
+
         tenantRepository.save(tenant);
+	}
+
+    /**
+     * Soft-closes all still-active co-occupants belonging to the given main tenant, mirroring
+     * {@code CoOccupantService.deactivateCoOccupant} (status = CLOSED). Called whenever the main
+     * tenant is offboarded so dependents are never orphaned under an inactive parent.
+     */
+    private void deactivateCoOccupantsOf(Tenant tenant) {
+        if (tenant == null || tenant.getId() == null) {
+            return;
+        }
+        List<CoOccupant> coOccupants =
+                coOccupantRepository.findByTenantIdAndStatusNot(tenant.getId(), Status.CLOSED);
+        if (coOccupants.isEmpty()) {
+            return;
+        }
+        for (CoOccupant coOccupant : coOccupants) {
+            coOccupant.setStatus(Status.CLOSED);
+        }
+        coOccupantRepository.saveAll(coOccupants);
+        LOGGER.info("Closed {} co-occupant(s) for deactivated tenant ID {}", coOccupants.size(), tenant.getId());
 	}
 
 	public Tenant updateTenant(Integer id, Tenant updatedTenant) {
@@ -114,10 +146,14 @@ public class TenantService {
 
         // If tenant is being deactivated, free their room and detach it so the unit is cleanly
         // available for the next tenant (history stays with this tenant record either way).
-        if (becomingInactive && oldRoom != null) {
-            oldRoom.setOccupied(false);
-            roomRepository.save(oldRoom);
-            updatedTenant.setRoom(null);
+        if (becomingInactive) {
+            if (oldRoom != null) {
+                oldRoom.setOccupied(false);
+                roomRepository.save(oldRoom);
+                updatedTenant.setRoom(null);
+            }
+            // Retire dependents along with their main tenant (see deleteTenantById).
+            deactivateCoOccupantsOf(existingTenant);
         } else if (becomingActive && newRoom != null) {
             // Tenant reactivated — mark their assigned room as occupied
             Room roomToOccupy = roomRepository.findById(newRoom.getId())
