@@ -25,6 +25,8 @@ public interface AppUserRepository extends JpaRepository<AppUser, Integer> {
 
     List<AppUser> findByRoleAndTenantIsNull(UserRoles role);
 
+    List<AppUser> findByTenantIdAndRole(Integer tenantId, UserRoles role);
+
     long countByLastLoginAtAfter(LocalDateTime since);
 
     long countByLastLoginAtIsNull();

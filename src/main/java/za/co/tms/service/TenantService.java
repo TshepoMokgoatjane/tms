@@ -5,11 +5,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import za.co.tms.exception.TenantNotFoundException;
+import za.co.tms.domain.AppUser;
 import za.co.tms.domain.CoOccupant;
 import za.co.tms.domain.Room;
 import za.co.tms.domain.Status;
 import za.co.tms.domain.Tenant;
 import za.co.tms.domain.TenantStatus;
+import za.co.tms.domain.UserRoles;
+import za.co.tms.repository.AppUserRepository;
 import za.co.tms.repository.CoOccupantRepository;
 import za.co.tms.repository.RoomRepository;
 import za.co.tms.repository.TenantRepository;
@@ -27,14 +30,17 @@ public class TenantService {
     private final TenantValidator tenantValidator;
     private final RoomRepository roomRepository;
     private final CoOccupantRepository coOccupantRepository;
+    private final AppUserRepository appUserRepository;
 	
 	@Autowired
 	public TenantService(TenantRepository tenantRepository, TenantValidator tenantValidator,
-                         RoomRepository roomRepository, CoOccupantRepository coOccupantRepository) {
+                         RoomRepository roomRepository, CoOccupantRepository coOccupantRepository,
+                         AppUserRepository appUserRepository) {
 		this.tenantRepository = tenantRepository;
         this.tenantValidator = tenantValidator;
         this.roomRepository = roomRepository;
         this.coOccupantRepository = coOccupantRepository;
+        this.appUserRepository = appUserRepository;
 	}
 			
 	public List<Tenant> findAllTenants() {
@@ -108,24 +114,50 @@ public class TenantService {
 	}
 
     /**
-     * Soft-closes all still-active co-occupants belonging to the given main tenant, mirroring
-     * {@code CoOccupantService.deactivateCoOccupant} (status = CLOSED). Called whenever the main
-     * tenant is offboarded so dependents are never orphaned under an inactive parent.
+     * Offboards every dependent of the given main tenant when that tenant is deactivated:
+     * <ol>
+     *   <li>Soft-closes all still-active co-occupant records (status = CLOSED), mirroring
+     *       {@code CoOccupantService.deactivateCoOccupant}.</li>
+     *   <li>Soft-closes the co-occupants' linked login accounts (role CO_OCCUPANT, status = CLOSED)
+     *       so a departed dependent can no longer sign in.</li>
+     * </ol>
+     *
+     * <p>Only CO_OCCUPANT accounts are touched here — the main tenant's own account is handled by
+     * the separate account offboarding path. We close those accounts directly via the repository
+     * (not {@code AppUserService.deactivateUser}) on purpose: a co-occupant account shares the
+     * main tenant via {@code AppUser.tenant}, so routing through {@code deactivateUser} would
+     * re-trigger the account→tenant sync and recurse back into tenant deactivation.
      */
     private void deactivateCoOccupantsOf(Tenant tenant) {
         if (tenant == null || tenant.getId() == null) {
             return;
         }
+
+        // 1) Close the co-occupant records.
         List<CoOccupant> coOccupants =
                 coOccupantRepository.findByTenantIdAndStatusNot(tenant.getId(), Status.CLOSED);
-        if (coOccupants.isEmpty()) {
-            return;
+        if (!coOccupants.isEmpty()) {
+            for (CoOccupant coOccupant : coOccupants) {
+                coOccupant.setStatus(Status.CLOSED);
+            }
+            coOccupantRepository.saveAll(coOccupants);
+            LOGGER.info("Closed {} co-occupant(s) for deactivated tenant ID {}", coOccupants.size(), tenant.getId());
         }
-        for (CoOccupant coOccupant : coOccupants) {
-            coOccupant.setStatus(Status.CLOSED);
+
+        // 2) Close the co-occupants' login accounts so departed dependents can't sign in.
+        List<AppUser> coOccupantUsers =
+                appUserRepository.findByTenantIdAndRole(tenant.getId(), UserRoles.CO_OCCUPANT);
+        List<AppUser> toClose = coOccupantUsers.stream()
+                .filter(u -> u.getStatus() != Status.CLOSED)
+                .toList();
+        if (!toClose.isEmpty()) {
+            for (AppUser user : toClose) {
+                user.setStatus(Status.CLOSED);
+                user.setDateModified(java.time.LocalDateTime.now());
+            }
+            appUserRepository.saveAll(toClose);
+            LOGGER.info("Closed {} co-occupant login account(s) for deactivated tenant ID {}", toClose.size(), tenant.getId());
         }
-        coOccupantRepository.saveAll(coOccupants);
-        LOGGER.info("Closed {} co-occupant(s) for deactivated tenant ID {}", coOccupants.size(), tenant.getId());
 	}
 
 	public Tenant updateTenant(Integer id, Tenant updatedTenant) {

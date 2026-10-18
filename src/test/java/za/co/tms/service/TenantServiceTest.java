@@ -6,12 +6,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import za.co.tms.exception.TenantNotFoundException;
+import za.co.tms.domain.AppUser;
 import za.co.tms.domain.CoOccupant;
 import za.co.tms.domain.Relationship;
 import za.co.tms.domain.Room;
 import za.co.tms.domain.Status;
 import za.co.tms.domain.Tenant;
 import za.co.tms.domain.TenantStatus;
+import za.co.tms.domain.UserRoles;
+import za.co.tms.repository.AppUserRepository;
 import za.co.tms.repository.CoOccupantRepository;
 import za.co.tms.repository.RoomRepository;
 import za.co.tms.repository.TenantRepository;
@@ -42,6 +45,9 @@ public class TenantServiceTest {
 
     @Mock
     private CoOccupantRepository coOccupantRepository;
+
+    @Mock
+    private AppUserRepository appUserRepository;
 
     @InjectMocks
     private TenantService tenantService;
@@ -411,5 +417,42 @@ public class TenantServiceTest {
 
         // Nothing to close -> never call saveAll.
         verify(coOccupantRepository, never()).saveAll(any());
+        verify(appUserRepository, never()).saveAll(any());
+    }
+
+    @Test
+    void deactivatingTenant_closesCoOccupantLoginAccounts() {
+        int tenantId = 1;
+        Tenant tenant = new Tenant();
+        tenant.setId(tenantId);
+        tenant.setName("Main");
+        tenant.setTenantStatus(TenantStatus.ACTIVE);
+
+        // One active co-occupant login account and one already-closed account for the same tenant.
+        AppUser activeAccount = new AppUser();
+        activeAccount.setId(500);
+        activeAccount.setUsername("dependent-login");
+        activeAccount.setRole(UserRoles.CO_OCCUPANT);
+        activeAccount.setStatus(Status.OPEN);
+
+        AppUser alreadyClosed = new AppUser();
+        alreadyClosed.setId(501);
+        alreadyClosed.setUsername("old-dependent");
+        alreadyClosed.setRole(UserRoles.CO_OCCUPANT);
+        alreadyClosed.setStatus(Status.CLOSED);
+
+        when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(tenant));
+        when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(coOccupantRepository.findByTenantIdAndStatusNot(tenantId, Status.CLOSED))
+                .thenReturn(List.of());
+        when(appUserRepository.findByTenantIdAndRole(tenantId, UserRoles.CO_OCCUPANT))
+                .thenReturn(List.of(activeAccount, alreadyClosed));
+
+        tenantService.deleteTenantById(tenantId);
+
+        // The active dependent account is closed; the already-closed one is left as-is and only
+        // the account(s) that actually changed are persisted.
+        assertEquals(Status.CLOSED, activeAccount.getStatus(), "Active co-occupant login must be closed");
+        verify(appUserRepository).saveAll(List.of(activeAccount));
     }
 }
