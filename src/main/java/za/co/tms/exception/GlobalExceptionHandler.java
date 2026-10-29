@@ -2,6 +2,7 @@ package za.co.tms.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.convert.ConversionFailedException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -20,6 +21,10 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    // DB unique constraint on tenant.room_id — generated from Tenant.room @JoinColumn(unique = true).
+    // The DataIntegrityViolationException handler matches on this name to surface a friendly message.
+    private static final String ROOM_ID_UNIQUE_CONSTRAINT = "UK_2kx83dvllwy0s1byoy014018p";
+
     @ExceptionHandler(TenantNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleTenantNotFound(TenantNotFoundException ex) {
         ErrorResponse errorResponse = new ErrorResponse("TENANT_NOT_FOUND", ex.getMessage());
@@ -30,6 +35,32 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInvalidLeasePeriod(InvalidLeasePeriodException ex) {
         ErrorResponse errorResponse = new ErrorResponse("INVALID_LEASE_PERIOD", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(RoomAlreadyAssignedException.class)
+    public ResponseEntity<ErrorResponse> handleRoomAlreadyAssigned(RoomAlreadyAssignedException ex) {
+        log.warn("Room already assigned: {}", ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse("ROOM_ALREADY_ASSIGNED", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    @ExceptionHandler(RoomNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleRoomNotFound(RoomNotFoundException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("ROOM_NOT_FOUND", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        String cause = ex.getMostSpecificCause().getMessage();
+        log.warn("Data integrity violation: {}", cause);
+
+        String message = cause != null && cause.contains(ROOM_ID_UNIQUE_CONSTRAINT)
+                ? "This room is already assigned to another tenant."
+                : "The request could not be completed because it conflicts with existing data.";
+
+        ErrorResponse errorResponse = new ErrorResponse("DATA_INTEGRITY_VIOLATION", message);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
     @ExceptionHandler(Exception.class)

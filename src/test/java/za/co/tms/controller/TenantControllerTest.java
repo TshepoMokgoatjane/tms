@@ -8,9 +8,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import za.co.tms.config.NoSecurityConfig;
+import za.co.tms.exception.RoomAlreadyAssignedException;
 import za.co.tms.exception.TenantNotFoundException;
 import za.co.tms.domain.PaymentDay;
 import za.co.tms.domain.Room;
@@ -118,6 +120,72 @@ public class TenantControllerTest {
                 .content(objectMapper.writeValueAsString(tenant)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value(TENANT_NAME));
+    }
+
+    @Test
+    void shouldReturn409WhenRoomAlreadyAssigned() throws Exception {
+        Room room = new Room();
+        room.setId(2L);
+        room.setCode("A2");
+        room.setDescription("2 Bedroom Apartment");
+
+        Tenant tenant = new Tenant();
+        tenant.setName(TENANT_NAME);
+        tenant.setSurname(TENANT_SURNAME);
+        tenant.setCellPhoneNumber(CELLPHONE_NUMBER);
+        tenant.setAlternativeCellPhoneNumber(ALTERNATIVE_CELLPHONE_NUMBER);
+        tenant.setRoom(room);
+        tenant.setNumberOfTenantsInUnit(NUMBER_OF_TENANTS_IN_UNIT);
+        tenant.setPaymentDay(PaymentDay.DAY_1);
+        tenant.setEmail(TENANT_EMAIL);
+        tenant.setTenantStatus(TenantStatus.ACTIVE);
+        tenant.setLeaseStartDate(LocalDate.now());
+        tenant.setLeaseEndDate(LocalDate.now().plusDays(30));
+        tenant.setTenantBehaviour(TenantBehaviour.GOOD);
+
+        String message = "Room A2 - 2 Bedroom Apartment is already assigned to another tenant. "
+                + "Free the room first before assigning a new tenant.";
+        when(tenantService.addTenant(any(Tenant.class)))
+                .thenThrow(new RoomAlreadyAssignedException(message));
+
+        mockMvc.perform(post(CREATE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(tenant)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errorCode").value("ROOM_ALREADY_ASSIGNED"))
+                .andExpect(jsonPath("$.message").value(message));
+    }
+
+    @Test
+    void shouldReturn409WhenDataIntegrityViolation() throws Exception {
+        Room room = new Room();
+        room.setId(2L);
+        room.setCode("A2");
+
+        Tenant tenant = new Tenant();
+        tenant.setName(TENANT_NAME);
+        tenant.setSurname(TENANT_SURNAME);
+        tenant.setCellPhoneNumber(CELLPHONE_NUMBER);
+        tenant.setAlternativeCellPhoneNumber(ALTERNATIVE_CELLPHONE_NUMBER);
+        tenant.setRoom(room);
+        tenant.setNumberOfTenantsInUnit(NUMBER_OF_TENANTS_IN_UNIT);
+        tenant.setPaymentDay(PaymentDay.DAY_1);
+        tenant.setEmail(TENANT_EMAIL);
+        tenant.setTenantStatus(TenantStatus.ACTIVE);
+        tenant.setLeaseStartDate(LocalDate.now());
+        tenant.setLeaseEndDate(LocalDate.now().plusDays(30));
+        tenant.setTenantBehaviour(TenantBehaviour.GOOD);
+
+        when(tenantService.addTenant(any(Tenant.class)))
+                .thenThrow(new DataIntegrityViolationException(
+                        "could not execute statement; constraint [UK_2kx83dvllwy0s1byoy014018p]"));
+
+        mockMvc.perform(post(CREATE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(tenant)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errorCode").value("DATA_INTEGRITY_VIOLATION"))
+                .andExpect(jsonPath("$.message").value("This room is already assigned to another tenant."));
     }
 
     @Test

@@ -4,6 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import za.co.tms.exception.RoomAlreadyAssignedException;
+import za.co.tms.exception.RoomNotFoundException;
 import za.co.tms.exception.TenantNotFoundException;
 import za.co.tms.domain.AppUser;
 import za.co.tms.domain.CoOccupant;
@@ -63,6 +66,7 @@ public class TenantService {
                 .orElseThrow(() -> new TenantNotFoundException("Tenant with ID " + id + " not found"));
 	}
 	
+	@Transactional
 	public Tenant addTenant(Tenant tenant) {
 
         LOGGER.info("Registering a new tenant");
@@ -76,7 +80,16 @@ public class TenantService {
         // than calling findById(null), which would otherwise surface as a generic 500.
         if (tenant.getRoom() != null && tenant.getRoom().getId() != null) {
             Room room = roomRepository.findById(tenant.getRoom().getId())
-                    .orElseThrow(() -> new RuntimeException("Room not found"));
+                    .orElseThrow(() -> new RoomNotFoundException("Room not found"));
+
+            // Reject assignment to a room still held by any non-INACTIVE tenant (ACTIVE or
+            // SUSPENDED). This is the user-facing safety net for the one-tenant-per-room rule.
+            tenantRepository.findByRoomIdAndTenantStatusNot(room.getId(), TenantStatus.INACTIVE)
+                    .ifPresent(existing -> {
+                        throw new RoomAlreadyAssignedException("Room " + room.getRoomNumber()
+                                + " is already assigned to another tenant. Free the room first before assigning a new tenant.");
+                    });
+
             room.setOccupied(true);
             roomRepository.save(room);
             tenant.setRoom(room);
@@ -88,6 +101,7 @@ public class TenantService {
 		return tenantRepository.save(tenant);
 	}
 	
+	@Transactional
 	public void deleteTenantById(int id) {
 
         LOGGER.info("Deleting tenant with ID {}", id);
@@ -160,6 +174,7 @@ public class TenantService {
         }
 	}
 
+	@Transactional
 	public Tenant updateTenant(Integer id, Tenant updatedTenant) {
 
         LOGGER.info("Updating tenant with ID {}", id);
@@ -169,6 +184,11 @@ public class TenantService {
         // Handle room change: free old room, occupy new room
         Room oldRoom = existingTenant.getRoom();
         Room newRoom = updatedTenant.getRoom();
+
+        // The room link this tenant ends up with. Resolved explicitly on EVERY branch so the
+        // final merge never re-derives it from updatedTenant (which carries a detached/unmanaged
+        // room) — reactivation must not null the link and deactivation must reliably free the room.
+        Room resolvedRoom = oldRoom;
 
         boolean becomingInactive = updatedTenant.getTenantStatus() == TenantStatus.INACTIVE
                 && existingTenant.getTenantStatus() != TenantStatus.INACTIVE;
@@ -182,29 +202,41 @@ public class TenantService {
             if (oldRoom != null) {
                 oldRoom.setOccupied(false);
                 roomRepository.save(oldRoom);
-                updatedTenant.setRoom(null);
             }
+            resolvedRoom = null;
             // Retire dependents along with their main tenant (see deleteTenantById).
             deactivateCoOccupantsOf(existingTenant);
         } else if (becomingActive && newRoom != null) {
-            // Tenant reactivated — mark their assigned room as occupied
-            Room roomToOccupy = roomRepository.findById(newRoom.getId())
-                    .orElseThrow(() -> new RuntimeException("Room not found"));
-            roomToOccupy.setOccupied(true);
-            roomRepository.save(roomToOccupy);
+            // Tenant reactivated — mark their assigned room as occupied, keeping the link intact.
+            Room managed = roomRepository.findById(newRoom.getId())
+                    .orElseThrow(() -> new RoomNotFoundException("Room not found"));
+            assertRoomFreeForTenant(managed, id);
+            managed.setOccupied(true);
+            roomRepository.save(managed);
+            resolvedRoom = managed;
         } else {
             // Normal room swap logic (tenant stays active, just changing rooms)
-            if (oldRoom != null && (newRoom == null || !oldRoom.getId().equals(newRoom.getId()))) {
-                oldRoom.setOccupied(false);
-                roomRepository.save(oldRoom);
-            }
+            if (newRoom == null) {
+                if (oldRoom != null) {
+                    oldRoom.setOccupied(false);
+                    roomRepository.save(oldRoom);
+                }
+                resolvedRoom = null;
+            } else if (oldRoom == null || !newRoom.getId().equals(oldRoom.getId())) {
+                // Real swap to a different room: verify it is free BEFORE freeing the old one.
+                Room managed = roomRepository.findById(newRoom.getId())
+                        .orElseThrow(() -> new RoomNotFoundException("Room not found"));
+                assertRoomFreeForTenant(managed, id);
 
-            if (newRoom != null && (oldRoom == null || !newRoom.getId().equals(oldRoom.getId()))) {
-                Room roomToOccupy = roomRepository.findById(newRoom.getId())
-                        .orElseThrow(() -> new RuntimeException("Room not found"));
-                roomToOccupy.setOccupied(true);
-                roomRepository.save(roomToOccupy);
+                if (oldRoom != null) {
+                    oldRoom.setOccupied(false);
+                    roomRepository.save(oldRoom);
+                }
+                managed.setOccupied(true);
+                roomRepository.save(managed);
+                resolvedRoom = managed;
             }
+            // Same-room update: keep oldRoom (resolvedRoom already defaults to it).
         }
 
         // Merge only the fields that are allowed to be updated
@@ -214,7 +246,7 @@ public class TenantService {
         existingTenant.setEmail(updatedTenant.getEmail());
         existingTenant.setCellPhoneNumber(updatedTenant.getCellPhoneNumber());
         existingTenant.setAlternativeCellPhoneNumber(updatedTenant.getAlternativeCellPhoneNumber());
-        existingTenant.setRoom(updatedTenant.getRoom());
+        existingTenant.setRoom(resolvedRoom);
         existingTenant.setLeaseStartDate(updatedTenant.getLeaseStartDate());
         existingTenant.setLeaseEndDate(updatedTenant.getLeaseEndDate());
         existingTenant.setNumberOfTenantsInUnit(updatedTenant.getNumberOfTenantsInUnit());
@@ -226,6 +258,21 @@ public class TenantService {
 
         return tenantRepository.save(existingTenant);
 	}
+
+    /**
+     * Guards the one-tenant-per-room rule for updates: rejects assigning {@code room} to the
+     * tenant being updated when it is still held by a DIFFERENT non-INACTIVE tenant (ACTIVE or
+     * SUSPENDED). The occupant's identity is compared with {@code .equals} because Tenant.id is an
+     * Integer while Room.id is a Long.
+     */
+    private void assertRoomFreeForTenant(Room room, Integer tenantId) {
+        tenantRepository.findByRoomIdAndTenantStatusNot(room.getId(), TenantStatus.INACTIVE)
+                .filter(occupant -> !occupant.getId().equals(tenantId))
+                .ifPresent(occupant -> {
+                    throw new RoomAlreadyAssignedException("Room " + room.getRoomNumber()
+                            + " is already assigned to another tenant. Free the room first before assigning a new tenant.");
+                });
+    }
 
     /*
     This method can be used to:

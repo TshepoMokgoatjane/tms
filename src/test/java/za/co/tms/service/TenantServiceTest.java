@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import za.co.tms.exception.RoomAlreadyAssignedException;
 import za.co.tms.exception.TenantNotFoundException;
 import za.co.tms.domain.AppUser;
 import za.co.tms.domain.CoOccupant;
@@ -179,6 +180,87 @@ public class TenantServiceTest {
         verify(roomRepository, never()).findById(any());
     }
 
+    // ===================== One-tenant-per-room guard on create =====================
+
+    @Test
+    void addTenant_intoRoomHeldByActiveTenant_throwsAndDoesNotSave() {
+        Room room = new Room();
+        room.setId(5L);
+        room.setCode("A2");
+        room.setDescription("2 Bedroom Apartment");
+        room.setOccupied(true);
+
+        Tenant occupant = new Tenant();
+        occupant.setId(42);
+        occupant.setTenantStatus(TenantStatus.ACTIVE);
+        occupant.setRoom(room);
+
+        Tenant incoming = new Tenant();
+        incoming.setName("Incoming");
+        incoming.setRoom(room);
+
+        when(roomRepository.findById(5L)).thenReturn(Optional.of(room));
+        when(tenantRepository.findByRoomIdAndTenantStatusNot(5L, TenantStatus.INACTIVE))
+                .thenReturn(Optional.of(occupant));
+
+        RoomAlreadyAssignedException ex = assertThrows(RoomAlreadyAssignedException.class,
+                () -> tenantService.addTenant(incoming));
+        assertEquals("Room A2 - 2 Bedroom Apartment is already assigned to another tenant. "
+                + "Free the room first before assigning a new tenant.", ex.getMessage());
+
+        verify(tenantRepository, never()).save(any());
+    }
+
+    @Test
+    void addTenant_intoRoomHeldBySuspendedTenant_throwsAndDoesNotSave() {
+        Room room = new Room();
+        room.setId(5L);
+        room.setCode("A2");
+        room.setDescription("2 Bedroom Apartment");
+        room.setOccupied(true);
+
+        Tenant occupant = new Tenant();
+        occupant.setId(42);
+        occupant.setTenantStatus(TenantStatus.SUSPENDED);
+        occupant.setRoom(room);
+
+        Tenant incoming = new Tenant();
+        incoming.setName("Incoming");
+        incoming.setRoom(room);
+
+        when(roomRepository.findById(5L)).thenReturn(Optional.of(room));
+        // A SUSPENDED tenant is still non-INACTIVE, so the query (status != INACTIVE) returns them.
+        when(tenantRepository.findByRoomIdAndTenantStatusNot(5L, TenantStatus.INACTIVE))
+                .thenReturn(Optional.of(occupant));
+
+        assertThrows(RoomAlreadyAssignedException.class, () -> tenantService.addTenant(incoming));
+        verify(tenantRepository, never()).save(any());
+    }
+
+    @Test
+    void addTenant_intoVacantRoom_occupiesRoomAndSaves() {
+        Room room = new Room();
+        room.setId(5L);
+        room.setCode("A2");
+        room.setOccupied(false);
+
+        Tenant incoming = new Tenant();
+        incoming.setName("Incoming");
+        incoming.setRoom(room);
+
+        when(roomRepository.findById(5L)).thenReturn(Optional.of(room));
+        when(tenantRepository.findByRoomIdAndTenantStatusNot(5L, TenantStatus.INACTIVE))
+                .thenReturn(Optional.empty());
+        when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Tenant result = tenantService.addTenant(incoming);
+
+        assertTrue(room.isOccupied(), "A vacant room must be marked occupied");
+        assertNotNull(result.getRoom());
+        verify(roomRepository).save(room);
+        verify(tenantRepository).save(incoming);
+    }
+
     @Test
     void shouldUpdateTenantSuccessfully() {
         // Arrange
@@ -335,6 +417,123 @@ public class TenantServiceTest {
 
         assertEquals(TenantStatus.ACTIVE, result.getTenantStatus());
         assertNotNull(result.getRoom(), "An active tenant must keep their room assigned");
+        assertEquals("A8", result.getRoom().getCode());
+    }
+
+    // ===================== One-tenant-per-room guard on update =====================
+
+    @Test
+    void updateTenant_becomingActive_keepsRoomLinkAndOccupies() {
+        // Reactivating a tenant must NOT null the room link and must mark the room occupied.
+        int tenantId = 1;
+        Room room = new Room();
+        room.setId(10L);
+        room.setCode("A8");
+        room.setOccupied(false);
+
+        Tenant existing = new Tenant();
+        existing.setId(tenantId);
+        existing.setName("Returning");
+        existing.setTenantStatus(TenantStatus.INACTIVE);
+        existing.setRoom(room);
+
+        Tenant update = new Tenant();
+        update.setName("Returning");
+        update.setSurname("Tenant");
+        update.setTenantStatus(TenantStatus.ACTIVE);
+        update.setRoom(room);
+
+        when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(existing));
+        when(roomRepository.findById(10L)).thenReturn(Optional.of(room));
+        // The room is held by this same tenant (or nobody) — reactivation must still succeed.
+        when(tenantRepository.findByRoomIdAndTenantStatusNot(10L, TenantStatus.INACTIVE))
+                .thenReturn(Optional.empty());
+        when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Tenant result = tenantService.updateTenant(tenantId, update);
+
+        assertEquals(TenantStatus.ACTIVE, result.getTenantStatus());
+        assertNotNull(result.getRoom(), "Reactivation must keep the room link non-null");
+        assertEquals("A8", result.getRoom().getCode());
+        assertTrue(room.isOccupied(), "Reactivated tenant's room must be occupied");
+    }
+
+    @Test
+    void updateTenant_intoRoomHeldByDifferentTenant_throwsConflict() {
+        int tenantId = 1;
+
+        Room currentRoom = new Room();
+        currentRoom.setId(10L);
+        currentRoom.setCode("A8");
+        currentRoom.setOccupied(true);
+
+        Room targetRoom = new Room();
+        targetRoom.setId(20L);
+        targetRoom.setCode("A2");
+        targetRoom.setDescription("2 Bedroom Apartment");
+        targetRoom.setOccupied(true);
+
+        Tenant existing = new Tenant();
+        existing.setId(tenantId);
+        existing.setName("Mover");
+        existing.setTenantStatus(TenantStatus.ACTIVE);
+        existing.setRoom(currentRoom);
+
+        Tenant otherOccupant = new Tenant();
+        otherOccupant.setId(99);
+        otherOccupant.setTenantStatus(TenantStatus.ACTIVE);
+        otherOccupant.setRoom(targetRoom);
+
+        Tenant update = new Tenant();
+        update.setName("Mover");
+        update.setSurname("Tenant");
+        update.setTenantStatus(TenantStatus.ACTIVE);
+        update.setRoom(targetRoom);
+
+        when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(existing));
+        when(roomRepository.findById(20L)).thenReturn(Optional.of(targetRoom));
+        when(tenantRepository.findByRoomIdAndTenantStatusNot(20L, TenantStatus.INACTIVE))
+                .thenReturn(Optional.of(otherOccupant));
+
+        RoomAlreadyAssignedException ex = assertThrows(RoomAlreadyAssignedException.class,
+                () -> tenantService.updateTenant(tenantId, update));
+        assertEquals("Room A2 - 2 Bedroom Apartment is already assigned to another tenant. "
+                + "Free the room first before assigning a new tenant.", ex.getMessage());
+
+        // The old room must NOT be freed when the swap is rejected (check happens first).
+        assertTrue(currentRoom.isOccupied(), "Old room must stay occupied when the swap is rejected");
+    }
+
+    @Test
+    void updateTenant_keepingOwnRoom_succeeds() {
+        // An active tenant keeping their own room: the occupancy check must treat themselves as
+        // the occupant and allow the update (same-room path does not even re-check).
+        int tenantId = 1;
+        Room room = new Room();
+        room.setId(10L);
+        room.setCode("A8");
+        room.setOccupied(true);
+
+        Tenant existing = new Tenant();
+        existing.setId(tenantId);
+        existing.setName("Stayer");
+        existing.setTenantStatus(TenantStatus.ACTIVE);
+        existing.setRoom(room);
+
+        Tenant update = new Tenant();
+        update.setName("Stayer Updated");
+        update.setSurname("Tenant");
+        update.setTenantStatus(TenantStatus.ACTIVE);
+        update.setRoom(room);
+
+        when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(existing));
+        when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(roomRepository.findById(10L)).thenReturn(Optional.of(room));
+
+        Tenant result = tenantService.updateTenant(tenantId, update);
+
+        assertEquals("Stayer Updated", result.getName());
+        assertNotNull(result.getRoom(), "Keeping the own room must leave the link intact");
         assertEquals("A8", result.getRoom().getCode());
     }
 
