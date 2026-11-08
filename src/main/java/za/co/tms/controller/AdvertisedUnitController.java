@@ -1,5 +1,6 @@
 package za.co.tms.controller;
 
+// Redeploy trigger: re-run the Railway build for the EXIF orientation fix.
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
