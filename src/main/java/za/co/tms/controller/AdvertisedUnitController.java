@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import za.co.tms.domain.GalleryImage;
+import za.co.tms.domain.Property;
 import za.co.tms.domain.Room;
 import za.co.tms.dto.AdvertisedUnitDTO;
 import za.co.tms.service.GalleryImageService;
@@ -77,6 +78,24 @@ public class AdvertisedUnitController {
                 .map(this::toDto)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(units);
+    }
+
+    @GetMapping("/{roomId}/lease")
+    @Operation(summary = "Download the lease for an advertised unit",
+            description = "Public download of the shared lease agreement PDF for the unit's owning property. "
+                    + "Returns 404 when the unit has no property or the property has no uploaded lease.")
+    public ResponseEntity<byte[]> downloadUnitLease(@PathVariable Long roomId) {
+        return roomService.getPropertyLeaseForRoom(roomId)
+                .map(property -> {
+                    String filename = property.getLeaseFilename() != null
+                            ? property.getLeaseFilename()
+                            : "lease.pdf";
+                    return ResponseEntity.ok()
+                            .contentType(MediaType.APPLICATION_PDF)
+                            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                            .body(property.getLeasePdfData());
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/image/{imageId}")
@@ -434,6 +453,7 @@ public class AdvertisedUnitController {
         List<Long> imageIds = roomService.getRoomImages(room.getId()).stream()
                 .map(GalleryImage::getId)
                 .collect(Collectors.toList());
+        Long propertyId = room.getProperty() != null ? room.getProperty().getId() : null;
         return new AdvertisedUnitDTO(
                 room.getId(),
                 room.getCode(),
@@ -444,7 +464,10 @@ public class AdvertisedUnitController {
                 room.getAvailableFrom(),
                 room.isOccupied(),
                 buildAvailabilityLabel(room),
-                imageIds);
+                imageIds,
+                propertyId,
+                roomService.isLeaseAvailable(room),
+                roomService.resolveStreetAddress(room));
     }
 
     /**

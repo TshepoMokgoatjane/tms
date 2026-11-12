@@ -44,6 +44,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
+    @ExceptionHandler(RoomNotAdvertisableException.class)
+    public ResponseEntity<ErrorResponse> handleRoomNotAdvertisable(RoomNotAdvertisableException ex) {
+        log.warn("Room not advertisable: {}", ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse("ROOM_NOT_ADVERTISABLE", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
     @ExceptionHandler(RoomNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleRoomNotFound(RoomNotFoundException ex) {
         ErrorResponse errorResponse = new ErrorResponse("ROOM_NOT_FOUND", ex.getMessage());

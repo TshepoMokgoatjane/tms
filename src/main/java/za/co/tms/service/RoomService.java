@@ -7,14 +7,16 @@ import org.springframework.stereotype.Service;
 import za.co.tms.domain.GalleryImage;
 import za.co.tms.domain.GalleryImageCategory;
 import za.co.tms.domain.GalleryImageStatus;
+import za.co.tms.domain.Property;
 import za.co.tms.domain.Room;
 import za.co.tms.exception.GalleryImageNotFoundException;
+import za.co.tms.exception.RoomNotAdvertisableException;
 import za.co.tms.repository.GalleryImageRepository;
 import za.co.tms.repository.RoomRepository;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,11 +28,14 @@ public class RoomService {
 
     private final RoomRepository roomRepository;
     private final GalleryImageRepository galleryImageRepository;
+    private final PropertyService propertyService;
 
     @Autowired
-    public RoomService(RoomRepository roomRepository, GalleryImageRepository galleryImageRepository) {
+    public RoomService(RoomRepository roomRepository, GalleryImageRepository galleryImageRepository,
+                       PropertyService propertyService) {
         this.roomRepository = roomRepository;
         this.galleryImageRepository = galleryImageRepository;
+        this.propertyService = propertyService;
     }
 
     public List<Room> findAll() {
@@ -72,6 +77,11 @@ public class RoomService {
         existingRoom.setAdvertDescription(updatedRoom.getAdvertDescription());
         existingRoom.setDocumentsRequired(updatedRoom.getDocumentsRequired());
 
+        // Persist the owning-property link when the form supplies one (dropdown in FEAT-004). A
+        // property with a null id means "no property selected" and detaches the room; a property
+        // with an id is resolved to the managed entity so the room.property FK actually saves.
+        existingRoom.setProperty(resolveProperty(updatedRoom.getProperty()));
+
         return roomRepository.save(existingRoom);
     }
 
@@ -93,6 +103,21 @@ public class RoomService {
     public Room advertiseRoom(Long id, String advertDescription, String documentsRequired,
                               LocalDate availableFrom, LocalDate advertisingEndDate) {
         Room room = findById(id);
+
+        // A unit can only be advertised once it belongs to a property AND that property has a lease
+        // uploaded — otherwise a prospective tenant could not download the lease for it.
+        Property property = room.getProperty();
+        if (property == null) {
+            throw new RoomNotAdvertisableException(
+                    "This unit has no property assigned yet — assign it to a property first.");
+        }
+        Property resolved = propertyService.findById(property.getId());
+        if (!propertyService.hasLease(resolved)) {
+            throw new RoomNotAdvertisableException(
+                    "Property " + resolved.getStreetAddress()
+                            + " has no lease agreement uploaded yet — upload one before advertising.");
+        }
+
         room.setAdvertised(true);
         room.setAdvertisingStartDate(LocalDate.now());
         room.setAdvertisingEndDate(advertisingEndDate);
@@ -134,6 +159,60 @@ public class RoomService {
                 .filter(room -> room.getAdvertisingStartDate() == null || !room.getAdvertisingStartDate().isAfter(today))
                 .filter(room -> room.getAdvertisingEndDate() == null || !room.getAdvertisingEndDate().isBefore(today))
                 .collect(Collectors.toList());
+    }
+
+    // ===================== Property / lease resolution (advert DTO helpers) =====================
+
+    /**
+     * Resolves the full Property-with-lease owning the given room, or empty when the room, its
+     * property, or the property's lease bytes are missing. Used by the public lease-download
+     * endpoint to stream the PDF only when it genuinely exists.
+     */
+    public Optional<Property> getPropertyLeaseForRoom(Long roomId) {
+        Room room = findById(roomId);
+        Property property = room.getProperty();
+        if (property == null) {
+            return Optional.empty();
+        }
+        Property resolved = propertyService.findById(property.getId());
+        if (resolved.getLeasePdfData() == null || resolved.getLeasePdfData().length == 0) {
+            return Optional.empty();
+        }
+        return Optional.of(resolved);
+    }
+
+    /**
+     * Whether the room's owning property has an uploaded lease. Resolves the property fresh so a
+     * lazily-loaded association does not hide the lease metadata.
+     */
+    public boolean isLeaseAvailable(Room room) {
+        if (room == null || room.getProperty() == null) {
+            return false;
+        }
+        return propertyService.hasLease(propertyService.findById(room.getProperty().getId()));
+    }
+
+    /**
+     * Public street address of the room's owning property, or null when the room has no property.
+     * ERF stays internal and is deliberately never exposed here.
+     */
+    public String resolveStreetAddress(Room room) {
+        if (room == null || room.getProperty() == null) {
+            return null;
+        }
+        return propertyService.findById(room.getProperty().getId()).getStreetAddress();
+    }
+
+    /**
+     * Resolves an incoming property reference (from a room form payload) to a managed entity, or
+     * null when none/blank was supplied so the room is detached. A reference with a null id means
+     * "no property selected".
+     */
+    private Property resolveProperty(Property incoming) {
+        if (incoming == null || incoming.getId() == null) {
+            return null;
+        }
+        return propertyService.findById(incoming.getId());
     }
 
     // ===================== Per-unit photos =====================

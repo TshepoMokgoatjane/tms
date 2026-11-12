@@ -29,4 +29,7 @@ public class AdvertisedUnitDTO {
     private boolean occupied;        // true if the outgoing tenant is still in the unit
     private String availabilityLabel; // ready-to-render: "Available now" / "Available from ..." / "Available soon"
     private List<Long> imageIds;     // ordered photo ids for this specific unit
+    private Long propertyId;         // owning property id (null when the unit has no property yet)
+    private boolean leaseAvailable;  // true only when the resolved property has an uploaded lease
+    private String streetAddress;    // public street address of the owning property (ERF stays internal)
 }
