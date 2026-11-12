@@ -31,6 +31,11 @@ public class Room {
 
 	private boolean occupied;
 
+	/** Owning property whose shared lease agreement applies to this unit. Nullable. */
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "property_id")
+	private Property property;
+
 	// ===== Advertising fields =====
 
 	/** Whether this unit is currently being advertised as available. */
