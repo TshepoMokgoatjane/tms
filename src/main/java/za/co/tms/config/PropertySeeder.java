@@ -1,24 +1,32 @@
 package za.co.tms.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import za.co.tms.domain.Property;
-import za.co.tms.domain.Room;
 import za.co.tms.repository.PropertyRepository;
 import za.co.tms.repository.RoomRepository;
 
 /**
- * Idempotent seeder for the initial set of properties and their units.
+ * Idempotent seeder for the initial set of properties and their unit links.
  * <p>
  * For each property it reuses an existing row (matched by street address) or creates one.
- * For each listed unit code it reuses the existing room (matched by code) and only sets the
- * property link; if the room does not exist it is created with the given description and linked.
- * Safe to run repeatedly — re-running neither duplicates rows nor changes existing room
- * descriptions/labels.
+ * It NEVER creates a room. Rooms are linked to their owning property ONLY by looking up an
+ * already-existing room by its real code and, if that room has no property yet, setting the link.
+ * An already-set {@code property_id} is never overwritten, and a code that does not exist is
+ * skipped (never created).
+ * <p>
+ * Net effect: against current production (properties present, rooms already linked) this is a
+ * no-op; against a fresh database it creates only the four properties and links whatever matching
+ * rooms happen to exist. Safe to run any number of times with no duplicate properties and no
+ * duplicate rooms.
  */
 @Component
 public class PropertySeeder implements CommandLineRunner {
+
+    private static final Logger log = LoggerFactory.getLogger(PropertySeeder.class);
 
     private final PropertyRepository propertyRepository;
     private final RoomRepository roomRepository;
@@ -37,14 +45,13 @@ public class PropertySeeder implements CommandLineRunner {
                 "B1", "B2", "C1");
 
         Property emberen = getOrCreateProperty("31 Emberen Street", "295");
-        getOrCreateUnit(emberen, "EMBEREN-COTTAGE", "Cottage");
-        getOrCreateUnit(emberen, "EMBEREN-MAIN", "Main House");
+        linkExistingRooms(emberen, "ERF 295 - Cottage", "ERF 295 - Main House");
 
         Property kamele = getOrCreateProperty("7 Kamele Crescent", "490");
-        getOrCreateUnit(kamele, "KAMELE-MAIN", "Main House");
+        linkExistingRooms(kamele, "ERF 490");
 
         Property ngwe = getOrCreateProperty("12 Ngwe Street", "557");
-        getOrCreateUnit(ngwe, "NGWE-MAIN", "Main House");
+        linkExistingRooms(ngwe, "ERF 557");
     }
 
     private Property getOrCreateProperty(String streetAddress, String erfNumber) {
@@ -58,37 +65,19 @@ public class PropertySeeder implements CommandLineRunner {
     }
 
     /**
-     * Links already-existing rooms to the property. Rooms that are not present are skipped
-     * (they were pre-existing units that should already be in the room table); their
-     * descriptions/labels are never changed.
+     * Links already-existing rooms to the property. A room is linked only when it exists and its
+     * {@code property} is currently null; an existing link is never overwritten. Codes with no
+     * matching room are skipped and never created — this is what prevents the historical
+     * duplicate-room bug from ever recurring.
      */
     private void linkExistingRooms(Property property, String... codes) {
         for (String code : codes) {
-            roomRepository.findByCode(code).ifPresent(room -> {
+            roomRepository.findByCode(code).ifPresentOrElse(room -> {
                 if (room.getProperty() == null) {
                     room.setProperty(property);
                     roomRepository.save(room);
                 }
-            });
+            }, () -> log.debug("PropertySeeder: no room with code '{}' — skipping (not creating)", code));
         }
-    }
-
-    /**
-     * Reuses an existing unit by code (only setting the property link) or creates it with the
-     * given description linked to the property.
-     */
-    private void getOrCreateUnit(Property property, String code, String description) {
-        roomRepository.findByCode(code).ifPresentOrElse(room -> {
-            if (room.getProperty() == null) {
-                room.setProperty(property);
-                roomRepository.save(room);
-            }
-        }, () -> {
-            Room room = new Room();
-            room.setCode(code);
-            room.setDescription(description);
-            room.setProperty(property);
-            roomRepository.save(room);
-        });
     }
 }
