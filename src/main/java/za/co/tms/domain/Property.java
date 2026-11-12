@@ -1,6 +1,7 @@
 package za.co.tms.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -17,6 +18,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Table(name = "property")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Schema(description = "Property/address owning a shared lease agreement PDF reused across its units")
 public class Property extends AuditModel implements Serializable {
 
