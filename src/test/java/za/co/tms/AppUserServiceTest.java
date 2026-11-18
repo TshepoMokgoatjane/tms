@@ -14,6 +14,7 @@ import za.co.tms.domain.Tenant;
 import za.co.tms.domain.TenantStatus;
 import za.co.tms.domain.UserRoles;
 import za.co.tms.repository.AppUserRepository;
+import za.co.tms.repository.CoOccupantRepository;
 import za.co.tms.repository.TenantRepository;
 import za.co.tms.service.AppUserService;
 import za.co.tms.service.TenantService;
@@ -38,6 +39,9 @@ public class AppUserServiceTest {
 
     @Mock
     private TenantService tenantService;
+
+    @Mock
+    private CoOccupantRepository coOccupantRepository;
 
     @InjectMocks
     private AppUserService appUserService;
@@ -160,5 +164,101 @@ public class AppUserServiceTest {
         // Assert: account closed; tenant retirement not re-invoked (idempotent guard).
         assertEquals(Status.CLOSED, user.getStatus());
         verify(tenantService, never()).deleteTenantById(anyInt());
+    }
+
+    // ===================== Co-occupant linking =====================
+
+    private Tenant mainTenant() {
+        Tenant tenant = new Tenant();
+        tenant.setId(42);
+        tenant.setTenantStatus(TenantStatus.ACTIVE);
+        tenant.setEmail("main@test.com");
+        tenant.setCellPhoneNumber("0711111111");
+        return tenant;
+    }
+
+    @Test
+    void linkTenant_coOccupantRole_doesNotOverwriteMainTenantContact() {
+        Tenant tenant = mainTenant();
+        AppUser user = new AppUser();
+        user.setId(10);
+        user.setUsername("coocc");
+        user.setRole(UserRoles.CO_OCCUPANT);
+        user.setEmail("co@test.com");
+        user.setCellPhoneNumber("0722222222");
+
+        when(appUserRepository.findById(10)).thenReturn(Optional.of(user));
+        when(tenantRepository.findById(42)).thenReturn(Optional.of(tenant));
+        when(appUserRepository.save(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AppUser result = appUserService.linkTenant(10, 42);
+
+        assertSame(tenant, result.getTenant());
+        assertEquals("main@test.com", tenant.getEmail());
+        assertEquals("0711111111", tenant.getCellPhoneNumber());
+        verify(tenantRepository, never()).save(any(Tenant.class));
+    }
+
+    @Test
+    void linkTenant_tenantRoleWithActiveCoOccupantRecord_restoresCoOccupantRole() {
+        Tenant tenant = mainTenant();
+        AppUser user = new AppUser();
+        user.setId(11);
+        user.setUsername("blesser");
+        user.setRole(UserRoles.TENANT);
+        user.setEmail("co@test.com");
+
+        when(appUserRepository.findById(11)).thenReturn(Optional.of(user));
+        when(tenantRepository.findById(42)).thenReturn(Optional.of(tenant));
+        when(coOccupantRepository.existsByTenantIdAndEmailIgnoreCaseAndStatusNot(42, "co@test.com", Status.CLOSED))
+                .thenReturn(true);
+        when(appUserRepository.save(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AppUser result = appUserService.linkTenant(11, 42);
+
+        assertEquals(UserRoles.CO_OCCUPANT, result.getRole());
+        assertSame(tenant, result.getTenant());
+        assertEquals("main@test.com", tenant.getEmail());
+        verify(tenantRepository, never()).save(any(Tenant.class));
+    }
+
+    @Test
+    void linkTenant_mainTenantAccount_stillSyncsContact() {
+        Tenant tenant = mainTenant();
+        AppUser user = new AppUser();
+        user.setId(12);
+        user.setUsername("main");
+        user.setRole(UserRoles.TENANT);
+        user.setEmail("new@test.com");
+        user.setCellPhoneNumber("0733333333");
+
+        when(appUserRepository.findById(12)).thenReturn(Optional.of(user));
+        when(tenantRepository.findById(42)).thenReturn(Optional.of(tenant));
+        when(appUserRepository.save(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        appUserService.linkTenant(12, 42);
+
+        assertEquals("new@test.com", tenant.getEmail());
+        assertEquals("0733333333", tenant.getCellPhoneNumber());
+        verify(tenantRepository).save(tenant);
+    }
+
+    @Test
+    void deactivateUser_coOccupant_doesNotRetireMainTenant() {
+        Tenant tenant = mainTenant();
+        AppUser user = new AppUser();
+        user.setId(13);
+        user.setUsername("coocc");
+        user.setRole(UserRoles.CO_OCCUPANT);
+        user.setStatus(Status.OPEN);
+        user.setTenant(tenant);
+
+        when(appUserRepository.findById(13)).thenReturn(Optional.of(user));
+        when(appUserRepository.save(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        appUserService.deactivateUser(13);
+
+        assertEquals(Status.CLOSED, user.getStatus());
+        verifyNoInteractions(tenantService);
     }
 }

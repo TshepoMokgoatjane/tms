@@ -25,6 +25,11 @@ public interface CoOccupantRepository extends JpaRepository<CoOccupant, Long> {
         @org.springframework.data.repository.query.Param("tenantStatus") za.co.tms.domain.TenantStatus tenantStatus);
 
     boolean existsByEmailIgnoreCase(String email);
+    /**
+     * True when the given tenant has a non-closed co-occupant record with this email. Used to
+     * recognise a login account as a co-occupant of that tenant when (re)linking it.
+     */
+    boolean existsByTenantIdAndEmailIgnoreCaseAndStatusNot(Integer tenantId, String email, za.co.tms.domain.Status status);
 
     boolean existsByCellPhoneNumber(String cellPhoneNumber);
 }

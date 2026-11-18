@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import za.co.tms.domain.*;
 import za.co.tms.repository.AppUserRepository;
+import za.co.tms.repository.CoOccupantRepository;
 import za.co.tms.repository.TenantRepository;
 
 import java.time.LocalDateTime;
@@ -22,13 +23,16 @@ public class AppUserService implements UserDetailsService {
     private final PasswordEncoder passwordEncoder;
     private final TenantRepository tenantRepository;
     private final TenantService tenantService;
+    private final CoOccupantRepository coOccupantRepository;
 
     @Autowired
-    public AppUserService(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder, TenantRepository tenantRepository, TenantService tenantService) {
+    public AppUserService(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder, TenantRepository tenantRepository,
+                          TenantService tenantService, CoOccupantRepository coOccupantRepository) {
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.tenantRepository = tenantRepository;
         this.tenantService = tenantService;
+        this.coOccupantRepository = coOccupantRepository;
     }
 
     @Override
@@ -100,7 +104,15 @@ public class AppUserService implements UserDetailsService {
         // tested TenantService path). This keeps the account and tenancy from drifting out of
         // sync on move-out. Reactivation is deliberately NOT symmetric — bringing a tenant back
         // requires a fresh room assignment and lease, so it stays a manual step.
+        // A co-occupant is linked to the MAIN tenant's record, so deactivating a co-occupant must never
+        // retire the main tenant. Covers both the CO_OCCUPANT role and accounts whose role drifted
+        // but still have an active co-occupant record on that tenant.
         Tenant linkedTenant = user.getTenant();
+        if (linkedTenant != null && isCoOccupantOf(user, linkedTenant)) {
+            log.info("User {} is a co-occupant of tenant {} — main tenant left active",
+                    user.getUsername(), linkedTenant.getId());
+            return;
+        }
         if (linkedTenant != null && linkedTenant.getTenantStatus() != TenantStatus.INACTIVE) {
             try {
                 tenantService.deleteTenantById(linkedTenant.getId());
@@ -112,6 +124,14 @@ public class AppUserService implements UserDetailsService {
                         user.getUsername(), linkedTenant.getId(), e.getMessage(), e);
             }
         }
+    }
+
+    private boolean isCoOccupantOf(AppUser user, Tenant tenant) {
+        if (user.getRole() == UserRoles.CO_OCCUPANT) {
+            return true;
+        }
+        return user.getEmail() != null && !user.getEmail().isBlank()
+                && coOccupantRepository.existsByTenantIdAndEmailIgnoreCaseAndStatusNot(tenant.getId(), user.getEmail(), Status.CLOSED);
     }
 
     public void activateUser(int id) {
@@ -140,17 +160,38 @@ public class AppUserService implements UserDetailsService {
             Tenant tenant = tenantRepository.findById(tenantId)
                     .orElseThrow(() -> new RuntimeException("Tenant not found with ID: " + tenantId));
 
-            // Sync contact info from user registration to tenant record
-            if (user.getEmail() != null && !user.getEmail().isBlank()) {
-                tenant.setEmail(user.getEmail());
-            }
-            if (user.getCellPhoneNumber() != null && !user.getCellPhoneNumber().isBlank()) {
-                tenant.setCellPhoneNumber(user.getCellPhoneNumber());
-            }
-            tenantRepository.save(tenant);
+            // A co-occupant shares the main tenant's record. Recognise them either by role or by an
+            // active co-occupant record on this tenant with the same email (e.g. re-linking a
+            // co-occupant whose account link was removed).
+            boolean hasCoOccupantRecord = user.getEmail() != null && !user.getEmail().isBlank()
+                    && coOccupantRepository.existsByTenantIdAndEmailIgnoreCaseAndStatusNot(tenantId, user.getEmail(), Status.CLOSED);
+            boolean coOccupantLink = user.getRole() == UserRoles.CO_OCCUPANT || hasCoOccupantRecord;
 
-            user.setTenant(tenant);
-            log.info("User {} linked to tenant ID {} — email/phone synced", user.getUsername(), tenantId);
+            if (coOccupantLink) {
+                // Restore the co-occupant role so the account keeps limited access and is not treated
+                // as the main tenant (e.g. deactivation must not retire the main tenant). Never demote an admin.
+                if (hasCoOccupantRecord && user.getRole() != UserRoles.CO_OCCUPANT && user.getRole() != UserRoles.ADMIN) {
+                    log.info("User {} role changed from {} to CO_OCCUPANT on link to tenant ID {}",
+                            user.getUsername(), user.getRole(), tenantId);
+                    user.setRole(UserRoles.CO_OCCUPANT);
+                }
+                user.setTenant(tenant);
+                // Do NOT copy the co-occupant's contact details over the main tenant's record.
+                log.info("User {} linked to tenant ID {} as co-occupant — tenant contact details left unchanged",
+                        user.getUsername(), tenantId);
+            } else {
+                // Sync contact info from user registration to tenant record
+                if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                    tenant.setEmail(user.getEmail());
+                }
+                if (user.getCellPhoneNumber() != null && !user.getCellPhoneNumber().isBlank()) {
+                    tenant.setCellPhoneNumber(user.getCellPhoneNumber());
+                }
+                tenantRepository.save(tenant);
+
+                user.setTenant(tenant);
+                log.info("User {} linked to tenant ID {} — email/phone synced", user.getUsername(), tenantId);
+            }
         }
         user.setDateModified(LocalDateTime.now());
         return appUserRepository.save(user);
