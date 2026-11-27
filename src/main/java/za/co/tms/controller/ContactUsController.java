@@ -2,9 +2,14 @@ package za.co.tms.controller;
 
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,6 +34,12 @@ public class ContactUsController {
 	private final RecaptchaVerifierService recaptchaVerifierService;
 	private final SmsService smsService;
 	private final EmailService emailService;
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ContactUsController.class);
+
+	/** Local-development only: accept the frontend's "dev-bypass" token. Off unless explicitly enabled. */
+	@Value("${recaptcha.dev-bypass-enabled:false}")
+	private boolean recaptchaDevBypassEnabled;
 	
 	@Autowired
 	public ContactUsController(ContactUsService contactUsService, RecaptchaVerifierService recaptchaVerifierService, SmsService smsService, EmailService emailService) {
@@ -80,21 +91,75 @@ public class ContactUsController {
 		return contactUs;
 	}
 	
+	private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", Pattern.CASE_INSENSITIVE);
+	private static final int MAX_MESSAGE_LENGTH = 5000;
+
+	/**
+	 * Server-side validation for a public submission. The form validates in the browser too, but
+	 * that is trivially bypassed by calling the API directly, so the rules are enforced here.
+	 * Returns a human-readable message for the first problem found, or null when the input is valid.
+	 */
+	private static String validateSubmission(ContactUs c) {
+		if (isBlankOrShort(c.getFirstName(), 2)) {
+			return "Please enter at least 2 characters for your First Name.";
+		}
+		if (isBlankOrShort(c.getLastName(), 2)) {
+			return "Please enter at least 2 characters for your Last Name.";
+		}
+		String mobile = c.getMobilePhoneNumber() == null ? "" : c.getMobilePhoneNumber().trim();
+		if (mobile.length() != 10) {
+			return "Mobile Phone Number must be 10 digits long.";
+		}
+		String email = c.getEmailAddress() == null ? "" : c.getEmailAddress().trim();
+		if (email.isEmpty() || !EMAIL_PATTERN.matcher(email).matches()) {
+			return "Please enter a valid Email Address.";
+		}
+		if (c.getWhereDidYouHearAboutUs() == null) {
+			return "Please tell us where you heard about us.";
+		}
+		String message = c.getMessage() == null ? "" : c.getMessage().trim();
+		if (message.isEmpty()) {
+			return "Please enter a Message.";
+		}
+		if (message.length() > MAX_MESSAGE_LENGTH) {
+			return "Your Message is too long (maximum " + MAX_MESSAGE_LENGTH + " characters).";
+		}
+		if (!c.isAcceptTermsAndConditions()) {
+			return "You must accept the Terms and Conditions.";
+		}
+		return null;
+	}
+
+	private static boolean isBlankOrShort(String value, int min) {
+		return value == null || value.trim().length() < min;
+	}
+
 	@PostMapping(path="/create")
-	public ResponseEntity<ContactUs> createContactUs(@RequestBody ContactUs contactUs, HttpServletRequest request) {
+	public ResponseEntity<?> createContactUs(@RequestBody ContactUs contactUs, HttpServletRequest request) {
+		String validationError = validateSubmission(contactUs);
+		if (validationError != null) {
+			return ResponseEntity.badRequest().body(Map.of("message", validationError));
+		}
+
 		String captchaToken = contactUs.getReCaptcha();
 
-		// Skip reCAPTCHA verification for development bypass token or empty tokens
-		if (captchaToken != null && !captchaToken.isBlank() && !"dev-bypass".equals(captchaToken)) {
+		// reCAPTCHA is mandatory. The only exception is the explicit local-development bypass,
+		// which is disabled unless recaptcha.dev-bypass-enabled=true (never set this in production).
+		boolean devBypass = recaptchaDevBypassEnabled && "dev-bypass".equals(captchaToken);
+		if (!devBypass) {
+			if (captchaToken == null || captchaToken.isBlank()) {
+				return ResponseEntity.badRequest().body(Map.of("message", "Please complete the reCAPTCHA."));
+			}
 			try {
 				boolean ok = recaptchaVerifierService.verify(captchaToken, request.getRemoteAddr());
 				if (!ok) {
-					return ResponseEntity.badRequest().build();
+					return ResponseEntity.badRequest().body(Map.of("message", "reCAPTCHA verification failed. Please try again."));
 				}
 			} catch (Exception e) {
-				// If reCAPTCHA verification fails due to network issues, log and continue
-				// In production, you may want to reject the request instead
-				System.out.println("reCAPTCHA verification failed (network issue), proceeding anyway: " + e.getMessage());
+				// Fail closed: if we cannot verify the captcha we must not accept the submission.
+				LOGGER.error("reCAPTCHA verification unavailable, rejecting submission: {}", e.getMessage());
+				return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+						.body(Map.of("message", "We could not verify your request right now. Please try again shortly."));
 			}
 		}
 
