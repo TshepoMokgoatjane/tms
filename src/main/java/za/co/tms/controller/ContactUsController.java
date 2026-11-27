@@ -134,8 +134,27 @@ public class ContactUsController {
 		return value == null || value.trim().length() < min;
 	}
 
+	/** Characters outside the Basic Multilingual Plane (e.g. emoji), which need 4 bytes in UTF-8. */
+	private static final Pattern FOUR_BYTE_CHARS = Pattern.compile("[\\x{10000}-\\x{10FFFF}]");
+
+	/**
+	 * The contact_us columns use MySQL's 3-byte "utf8" charset, so a 4-byte character (a phone
+	 * keyboard emoji, for instance) makes the INSERT fail with "Incorrect string value". Strip
+	 * those characters so the enquiry is still delivered. Remove this once the table is converted
+	 * to utf8mb4.
+	 */
+	private static String stripFourByteChars(String value) {
+		return value == null ? null : FOUR_BYTE_CHARS.matcher(value).replaceAll("");
+	}
+
 	@PostMapping(path="/create")
 	public ResponseEntity<?> createContactUs(@RequestBody ContactUs contactUs, HttpServletRequest request) {
+		contactUs.setFirstName(stripFourByteChars(contactUs.getFirstName()));
+		contactUs.setLastName(stripFourByteChars(contactUs.getLastName()));
+		contactUs.setEmailAddress(stripFourByteChars(contactUs.getEmailAddress()));
+		contactUs.setMobilePhoneNumber(stripFourByteChars(contactUs.getMobilePhoneNumber()));
+		contactUs.setMessage(stripFourByteChars(contactUs.getMessage()));
+
 		String validationError = validateSubmission(contactUs);
 		if (validationError != null) {
 			return ResponseEntity.badRequest().body(Map.of("message", validationError));
