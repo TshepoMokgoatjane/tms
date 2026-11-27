@@ -87,6 +87,8 @@ public class ContactUsController {
 	
 	@PutMapping(path="/update/{id}")
 	public ContactUs updateContactUs(@PathVariable int id, @RequestBody ContactUs contactUs) {
+		// The URL identifies the record; never trust an id (or a missing one) in the body.
+		contactUs.setId(id);
 		contactUsService.updateContactUs(contactUs);
 		return contactUs;
 	}
@@ -190,6 +192,9 @@ public ResponseEntity<ContactUs> replyToContactUs(@PathVariable int id, @Request
     ContactUs contactUs = contactUsService.findContactUsById(id);
 
     String replyMessage = body.get("resolution");
+    if (replyMessage == null || replyMessage.isBlank()) {
+        return ResponseEntity.badRequest().build();
+    }
     contactUs.setResolution(replyMessage);
     contactUsService.updateContactUs(contactUs);
 

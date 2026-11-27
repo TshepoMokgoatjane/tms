@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import za.co.tms.domain.ContactUs;
 import za.co.tms.repository.ContactUsRepository;
@@ -69,8 +70,13 @@ public class ContactUsService {
 		contactUsRepository.deleteById(id);
 	}
 	
+	/**
+	 * Updates an existing enquiry in place. This used to delete the row and insert a copy, which
+	 * gave it a new id on every save (breaking any request still holding the old id) and could
+	 * lose the enquiry if the insert failed after the delete.
+	 */
+	@Transactional
 	public void updateContactUs(ContactUs contactUs) {
-		deleteContactUsById(contactUs.getId());
 		contactUsRepository.save(contactUs);
 	}
 
