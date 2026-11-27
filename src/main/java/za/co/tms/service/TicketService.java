@@ -5,6 +5,7 @@ import java.util.function.Predicate;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -45,6 +46,21 @@ public class TicketService {
 		helpdeskTicket.setId(null);
 		// Record initial status timestamp so retention can measure time-in-terminal-state later.
 		helpdeskTicket.setStatusChangedAt(java.time.LocalDateTime.now());
+
+		// Audit trail. Never trust a client-supplied value: reset it, then stamp it only when the
+		// authenticated caller is an ADMIN raising the ticket for someone else.
+		helpdeskTicket.setLoggedByAdmin(null);
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication != null && authentication.isAuthenticated()) {
+			boolean callerIsAdmin = authentication.getAuthorities().stream()
+					.anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+			String caller = authentication.getName();
+			String raisedBy = helpdeskTicket.getRaisedBy();
+			if (callerIsAdmin && raisedBy != null && !raisedBy.isBlank() && !raisedBy.equals(caller)) {
+				helpdeskTicket.setLoggedByAdmin(caller);
+				log.info("AUDIT: admin {} logged ticket on behalf of tenant {}", caller, raisedBy);
+			}
+		}
 		Ticket savedTicket = ticketRepository.save(helpdeskTicket);
 		
 		// Send notifications when ticket is created
@@ -84,6 +100,10 @@ public class TicketService {
 		} else {
 			helpdeskTicket.setStatusChangedAt(existingTicket.getStatusChangedAt());
 		}
+
+		// The audit trail is immutable: the update body replaces the whole entity, so carry the
+		// stored value over rather than trusting (or losing) whatever the client sent.
+		helpdeskTicket.setLoggedByAdmin(existingTicket.getLoggedByAdmin());
 
 		// Update the ticket
 		ticketRepository.save(helpdeskTicket);

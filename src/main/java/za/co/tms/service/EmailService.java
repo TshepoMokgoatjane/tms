@@ -160,9 +160,12 @@ public class EmailService {
 
             String userEmail = appUser.get().getEmail();
             String subject = String.format("Ticket #%d Created - %s", ticket.getTicketNumber(), ticket.getSubject());
+            String intro = (ticket.getLoggedByAdmin() != null && !ticket.getLoggedByAdmin().isBlank())
+                    ? "Our support team has logged a support ticket on your behalf. Your ticket has been successfully registered."
+                    : "Thank you for creating a support ticket. Your ticket has been successfully registered.";
             String body = String.format(
                     "Dear %s,<br><br>" +
-                    "Thank you for creating a support ticket. Your ticket has been successfully registered.<br><br>" +
+                    "%s<br><br>" +
                     "<b>Ticket Details:</b><br>" +
                     "<b>Ticket #:</b> %d<br>" +
                     "<b>Subject:</b> %s<br>" +
@@ -174,6 +177,7 @@ public class EmailService {
                     "Kind regards,<br>" +
                     "<b>TLT Properties Support Team</b>",
                     appUser.get().getFirstName(),
+                    intro,
                     ticket.getTicketNumber(),
                     ticket.getSubject(),
                     ticket.getCategory() != null ? ticket.getCategory().name() : "N/A",

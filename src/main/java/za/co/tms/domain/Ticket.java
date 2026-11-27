@@ -49,4 +49,11 @@ public class Ticket implements Serializable {
 	 * ticket has been in a terminal state (CLOSED/COMPLETED) before it is eligible for purge.
 	 */
 	private LocalDateTime statusChangedAt;
+
+	/**
+	 * Audit trail: username of the ADMIN who logged this ticket on the tenant's behalf (e.g. an
+	 * emergency raised while viewing as the tenant). Null when the tenant raised it themselves.
+	 * Set by the server only; any value sent by a client is discarded.
+	 */
+	private String loggedByAdmin;
 }
